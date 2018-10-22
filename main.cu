@@ -15,8 +15,116 @@ void initVolume(uchar *, int, int, int);
 void printVolume(uchar *, int, int, int);
 int check(int *, int *, int);
 
+void printResult(int *vol, int height, int width, int depth);
 void checkResult(uchar *input, int *vol, int height, int width, int depth);
-double calcDist(double i, double j, double target_i, double target_j);
+double calcDist(double i, double j, double k, \
+		double target_i, double target_j, double target_k);
+
+/*
+	The following functions should be further optimized before putting into
+	Plastimatch.	
+*/
+// This function should return a double in the future.
+double distToClosetFacePointOfFV(int i, int j, int k,
+			int cfv_i, int cfv_j, int cfv_k,
+		       	int cfv_val)
+{
+	// If the CFV has negative i face
+	if (isKthBitSet(cfv_val, 1))
+	{
+		distToFacePoint
+	}
+
+	// If the CFV has negative j face
+
+}
+
+double distToFacePoint(int unchanged, // which dimension stays unchanged
+			double i, double j, double k, 
+			double cfv_i, double cfv_j, double cfv_k)
+{
+	double dist = DBL_MAX;
+
+	// When processing NEG/POS_J direction
+	if (unchanged == 0)
+	{
+		double temp_j = cfv_j - 0.5;
+
+		int add_j;
+		for (add_j = 0; add_j < 3; add_j++)
+		{
+			double temp_k = cfv_k - 0.5;
+
+			int add_k;
+			for (add_k = 0; add_k < 3; add_k++)
+			{
+				double temp_dist = calcDist(i, j, k,
+							cfv_i, 
+							temp_j + 0.5 * add_j, 
+							temp_k + 0.5 * add_k);
+				if(temp_dist < dist)
+				{
+					dist = temp_dist;
+				}
+
+			}
+		}
+	}
+
+	// When processing NEG/POS_I direction
+	if (unchanged == 1)
+	{
+		double temp_i = cfv_i - 0.5;
+
+		int add_i;
+		for (add_i = 0; add_i < 3; add_i++)
+		{
+			
+			double temp_k = cfv_k - 0.5;
+
+			int add_k;
+			for (add_k = 0; add_k < 3; add_k++)
+			{
+				double temp_dist = calcDist(i, j, k,
+							temp_i + 0.5 * add_i, 
+							cfv_j, 
+							temp_k + 0.5 * add_k);
+				if(temp_dist < dist)
+				{
+					dist = temp_dist;
+				}
+			}
+		}
+	}
+
+	// When processing NEG/POS_K direction	
+	if (unchanged == 2)
+	{
+		double temp_i = cfv_i - 0.5;
+
+		int add_i;
+		for (add_i = 0; add_i < 3; add_i++)
+		{
+			
+			double temp_j = cfv_j - 0.5;
+
+			int add_j;
+			for (add_j = 0; add_j < 3; add_j++)
+			{
+				double temp_dist = calcDist(i, j, k,
+							temp_i + 0.5 * add_i, 
+							temp_j + 0.5 * add_j, 
+							cfv_k);
+				if(temp_dist < dist)
+				{
+					dist = temp_dist;
+				}
+			}
+		}
+	}
+	
+	return dist;
+}
 
 bool isKthBitSet(int n, int k) 
 { 
@@ -24,6 +132,16 @@ bool isKthBitSet(int n, int k)
         return 1; 
     else
         return 0; 
+}
+
+double calcDist(double i, double j, double k, \
+		double target_i, double target_j, double target_k)
+{
+	double result = (i - target_i) * (i - target_i) + \
+			(j - target_j) * (j - target_j) + \
+			(k - target_k) * (k - target_k);
+
+	return sqrt(result);	
 }
 
 int main()
@@ -94,6 +212,8 @@ int main()
 	// Check the closet boundary point
 		
 
+	printResult(output_0, HEIGHT, WIDTH, DEPTH);
+	
 	checkResult(input, output_0, HEIGHT, WIDTH, DEPTH);
 
 	/*
@@ -336,6 +456,38 @@ void printVolume(uchar *vol, int height, int width, int depth)
 	}
 }
 
+void printResult(int *vol, int height, int width, int depth)
+{
+	int slice_stride = height * width;
+
+	int i, j, k;
+
+	for (k = 0; k < depth; k++)
+	{
+		printf("Image Slice: %d\n", k);
+
+		for (i = 0; i < height; i++)
+		{
+			for (j = 0; j < width; j++)
+			{
+				int row_id = vol[k * slice_stride + i * width + j] / width;
+				int col_id = vol[k * slice_stride + i * width + j] % width;
+				
+				if (row_id == i && col_id == j)
+				{
+					printf("****** ");
+				}
+				else
+				{
+					printf("(%d, %d) ", row_id, col_id);
+				}
+			}
+			printf("\n");
+		}
+		printf("\n");	
+	}
+}
+
 void checkResult(uchar *input, int *vol, int height, int width, int depth)
 {
 	// Distance between slices
@@ -361,9 +513,8 @@ void checkResult(uchar *input, int *vol, int height, int width, int depth)
 				else
 				{
 					int input_idx = vol[k * slice_stride + i * width + j];
-					//printf("(%d, %d) \n", row_id, col_id);
-					//printf("Value: %d \n",input[input_idx]);
-					double temp_dist = 1000000.0;
+					
+					double temp_dist = DBL_MAX;
 					
 					int face_id = 0;
 					int point_id = 0;
@@ -371,25 +522,21 @@ void checkResult(uchar *input, int *vol, int height, int width, int depth)
 					// If has negative i boundary
 					if (isKthBitSet(int(input[input_idx]), 1))
 					{
-					//	printf("Has negative i boundary. \n");
 						double dist_0 = calcDist(double(i), \
 									double(j), \
 									double(row_id + 0.5), \
 									double(col_id - 0.5));
-						//printf("%f\n", dist_0);
 
 						double dist_1 = calcDist(double(i), \
 									double(j), \
 									double(row_id), \
 									double(col_id - 0.5));
 						
-						//printf("%f\n", dist_1);
 						double dist_2 = calcDist(double(i), \
 									double(j), \
 									double(row_id - 0.5), \
 									double(col_id - 0.5));
 			
-						//printf("%f\n", dist_2);
 						if (dist_0 < temp_dist)
 						{
 							temp_dist = dist_0;
@@ -568,13 +715,6 @@ void checkResult(uchar *input, int *vol, int height, int width, int depth)
 	}
 }
 
-double calcDist(double i, double j, double target_i, double target_j)
-{
-	double result = (i - target_i) * (i - target_i) + \
-			(j - target_j) * (j - target_j);
-
-	return sqrt(result);	
-}
 
 int check(int *ref, int *output, int length)
 {
