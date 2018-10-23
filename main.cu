@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "volume.h"
 #include "exhaustiveFT.h"
@@ -217,7 +218,7 @@ double distToClosetFacePointOfFV(int i, int j, int k,
 	return dist;
 }
 
-void finalED (int *FT, uchar *raw_vol, int height, int width, int depth, float *ed_out)
+void finalED (char *scheme, int *FT, uchar *raw_vol, int height, int width, int depth, float *ed_out)
 {
 	int slice_stride = height * width;
 
@@ -243,17 +244,26 @@ void finalED (int *FT, uchar *raw_vol, int height, int width, int depth, float *
 				}
 				else
 				{
-					ed_out[k * slice_stride + i * width + j] = \
+					if (strcmp(scheme, "--center-face") == 0)
+					{
+						ed_out[k * slice_stride + i * width + j] = \
 						distToClosetFacePointOfFV(i, j, k, \
 						row_id, col_id, dep_id, \
 						raw_vol[FT[k * slice_stride + i * width + j]]); 
+					}
+					else if (strcmp(scheme, "--center-center") == 0)
+					{
+						ed_out[k * slice_stride + i * width + j] = \
+						calcDist(i, j, k, \
+						row_id, col_id, dep_id); 
+					}
 				}
 			}
 		}
 	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	// Initialize Input and Output Data
 	/*	ref will always stay in host */
@@ -323,7 +333,7 @@ int main()
 
 
 	float *ed_out = (float *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(float));
-	finalED (output_0, input, HEIGHT, WIDTH, DEPTH, ed_out);
+	finalED (argv[1], output_0, input, HEIGHT, WIDTH, DEPTH, ed_out);
 	printResult(ed_out, HEIGHT, WIDTH, DEPTH);
 	free(ed_out);
 	/*
