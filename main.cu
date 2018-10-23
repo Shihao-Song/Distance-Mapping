@@ -14,68 +14,32 @@
 void initVolume(uchar *, int, int, int);
 void printVolume(uchar *, int, int, int);
 int check(int *, int *, int);
-
 void printResult(int *vol, int height, int width, int depth);
-void checkResult(uchar *input, int *vol, int height, int width, int depth);
-double calcDist(double i, double j, double k, \
-		double target_i, double target_j, double target_k);
 
 /*
 	The following functions should be further optimized before putting into
 	Plastimatch.	
 */
-// This function should return a double in the future.
-double distToClosetFacePointOfFV(int i, int j, int k,
-			int cfv_i, int cfv_j, int cfv_k,
-		       	int cfv_val)
-{
-	// If the CFV has negative i face
-	if (isKthBitSet(cfv_val, 1))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
-	
-	// If the CFV has negative j face
-	if (isKthBitSet(cfv_val, 2))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
-	
-	// If the CFV has negative k face
-	if (isKthBitSet(cfv_val, 3))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
-	
-	// If the CFV has negative i face
-	if (isKthBitSet(cfv_val, 1))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
-	
-	// If the CFV has negative i face
-	if (isKthBitSet(cfv_val, 1))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
 
-	// If the CFV has negative i face
-	if (isKthBitSet(cfv_val, 1))
-	{
-		distToFacePoint(1, 
-				(double)i, (double)j, (double)k, 
-				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-	}
+bool isKthBitSet(int n, int k) 
+{ 
+    if (n & (1 << (k - 1))) 
+        return 1; 
+    else
+        return 0; 
+}
+
+/*
+	TODO - Spacing 
+*/
+double calcDist(double i, double j, double k, \
+		double target_i, double target_j, double target_k)
+{
+	double result = (i - target_i) * (i - target_i) + \
+			(j - target_j) * (j - target_j) + \
+			(k - target_k) * (k - target_k);
+
+	return sqrt(result);	
 }
 
 double distToFacePoint(int unchanged, // which dimension stays unchanged
@@ -165,23 +129,94 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 	return dist;
 }
 
-bool isKthBitSet(int n, int k) 
-{ 
-    if (n & (1 << (k - 1))) 
-        return 1; 
-    else
-        return 0; 
-}
-
-double calcDist(double i, double j, double k, \
-		double target_i, double target_j, double target_k)
+double distToClosetFacePointOfFV(int i, int j, int k,
+			int cfv_i, int cfv_j, int cfv_k,
+		       	int cfv_val)
 {
-	double result = (i - target_i) * (i - target_i) + \
-			(j - target_j) * (j - target_j) + \
-			(k - target_k) * (k - target_k);
+	double dist = DBL_MAX;
+	
+	// If the CFV has negative i face
+	if (isKthBitSet(cfv_val, 1))
+	{
+		double temp_dist = distToFacePoint(1, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+		
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+	
+	// If the CFV has negative j face
+	if (isKthBitSet(cfv_val, 2))
+	{
+		double temp_dist = distToFacePoint(0, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i-0.5, (double)cfv_j, (double)cfv_k);
+		
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+	
+	// If the CFV has negative k face
+	if (isKthBitSet(cfv_val, 3))
+	{
+		double temp_dist = distToFacePoint(2, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i, (double)cfv_j, (double)cfv_k-0.5);
 
-	return sqrt(result);	
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+	
+	// If the CFV has positive i face
+	if (isKthBitSet(cfv_val, 4))
+	{
+		double temp_dist = distToFacePoint(1, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i, (double)cfv_j+0.5, (double)cfv_k);
+
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+	
+	// If the CFV has positive j face
+	if (isKthBitSet(cfv_val, 5))
+	{
+		double temp_dist = distToFacePoint(0, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i+0.5, (double)cfv_j, (double)cfv_k);
+
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+
+	// If the CFV has positive k face
+	if (isKthBitSet(cfv_val, 6))
+	{
+		double temp_dist = distToFacePoint(2, 
+					(double)i, (double)j, (double)k, 
+					(double)cfv_i, (double)cfv_j, (double)cfv_k+0.5);
+
+		if (temp_dist < dist)
+		{
+			dist = temp_dist;
+		}
+	}
+
+	return dist;
 }
+
+
 
 int main()
 {
@@ -252,8 +287,6 @@ int main()
 		
 
 	printResult(output_0, HEIGHT, WIDTH, DEPTH);
-	
-	checkResult(input, output_0, HEIGHT, WIDTH, DEPTH);
 
 	/*
 		GPU Solutions
@@ -526,234 +559,6 @@ void printResult(int *vol, int height, int width, int depth)
 		printf("\n");	
 	}
 }
-
-void checkResult(uchar *input, int *vol, int height, int width, int depth)
-{
-	// Distance between slices
-	int slice_stride = height * width;
-
-	int i, j, k;
-
-	for (k = 0; k < depth; k++)
-	{
-		printf("Image Slice: %d\n", k);
-
-		for (i = 0; i < height; i++)
-		{
-			for (j = 0; j < width; j++)
-			{
-				int row_id = vol[k * slice_stride + i * width + j] / width;
-				int col_id = vol[k * slice_stride + i * width + j] % width;
-				
-				if (row_id == i && col_id == j)
-				{
-					printf("**********  ");
-				}
-				else
-				{
-					int input_idx = vol[k * slice_stride + i * width + j];
-					
-					double temp_dist = DBL_MAX;
-					
-					int face_id = 0;
-					int point_id = 0;
-					
-					// If has negative i boundary
-					if (isKthBitSet(int(input[input_idx]), 1))
-					{
-						double dist_0 = calcDist(double(i), \
-									double(j), \
-									double(row_id + 0.5), \
-									double(col_id - 0.5));
-
-						double dist_1 = calcDist(double(i), \
-									double(j), \
-									double(row_id), \
-									double(col_id - 0.5));
-						
-						double dist_2 = calcDist(double(i), \
-									double(j), \
-									double(row_id - 0.5), \
-									double(col_id - 0.5));
-			
-						if (dist_0 < temp_dist)
-						{
-							temp_dist = dist_0;
-							face_id = 0;
-							point_id = 0;
-						}
-						if (dist_1 < temp_dist)
-						{
-							temp_dist = dist_1;
-							face_id = 0;
-							point_id = 1;
-						}
-						
-						if (dist_2 < temp_dist)
-						{
-							temp_dist = dist_2;
-							face_id = 0;
-							point_id = 2;
-						}
-					}
-
-					// If has positive i boundary
-					if (isKthBitSet(int(input[input_idx]), 4))
-					{
-					//	printf("Check: %d\n", input[input_idx] & 0x08);
-					//	printf("Has positive i boundary. \n");
-						double dist_0 = calcDist(double(i), \
-									double(j), \
-									double(row_id - 0.5), \
-									double(col_id + 0.5));
-						
-						double dist_1 = calcDist(double(i), \
-									double(j), \
-									double(row_id), \
-									double(col_id + 0.5));
-						
-						double dist_2 = calcDist(double(i), \
-									double(j), \
-									double(row_id + 0.5), \
-									double(col_id + 0.5));
-			
-						if (dist_0 < temp_dist)
-						{
-							temp_dist = dist_0;
-							face_id = 2;
-							point_id = 0;
-
-						}
-						if (dist_1 < temp_dist)
-						{
-							temp_dist = dist_1;
-							face_id = 2;
-							point_id = 1;
-						}
-						
-						if (dist_2 < temp_dist)
-						{
-							temp_dist = dist_2;
-							face_id = 2;
-							point_id = 2;
-						}
-					}
-					
-					// If has negative j boundary
-					if (isKthBitSet(int(input[input_idx]), 2))
-					{
-					//	printf("Has negative j boundary. \n");
-						double dist_0 = calcDist(double(i), \
-									double(j), \
-									double(row_id - 0.5), \
-									double(col_id + 0.5));
-					//	printf("%f\n", dist_0);		
-						double dist_1 = calcDist(double(i), \
-									double(j), \
-									double(row_id - 0.5), \
-									double(col_id));
-						
-					//	printf("%f\n", dist_1);		
-						double dist_2 = calcDist(double(i), \
-									double(j), \
-									double(row_id - 0.5), \
-									double(col_id - 0.5));
-			
-					//	printf("%f\n", dist_2);		
-						if (dist_0 < temp_dist)
-						{
-					//		printf("dist_0\n");
-							temp_dist = dist_0;
-							face_id = 1;
-							point_id = 0;
-
-						}
-						if (dist_1 < temp_dist)
-						{
-					//		printf("dist_1\n");
-							temp_dist = dist_1;
-							face_id = 1;
-							point_id = 1;
-
-						}
-						
-						if (dist_2 < temp_dist)
-						{
-					//		printf("dist_2\n");
-							temp_dist = dist_2;
-							face_id = 1;
-							point_id = 2;
-
-						}
-					}
-					
-					// If has positive j boundary
-					if (isKthBitSet(int(input[input_idx]), 5))
-					{
-					//	printf("Has positive j boundary. \n");
-						double dist_0 = calcDist(double(i), \
-									double(j), \
-									double(row_id + 0.5), \
-									double(col_id - 0.5));
-						
-						double dist_1 = calcDist(double(i), \
-									double(j), \
-									double(row_id + 0.5), \
-									double(col_id));
-						
-						double dist_2 = calcDist(double(i), \
-									double(j), \
-									double(row_id + 0.5), \
-									double(col_id + 0.5));
-			
-						if (dist_0 < temp_dist)
-						{
-							temp_dist = dist_0;
-							face_id = 3;
-							point_id = 0;
-
-						}
-						if (dist_1 < temp_dist)
-						{
-							temp_dist = dist_1;
-							face_id = 3;
-							point_id = 1;
-						}
-						
-						if (dist_2 < temp_dist)
-						{
-							temp_dist = dist_2;
-							face_id = 3;
-							point_id = 2;
-
-						}
-					}
-					//printf("\n");
-						
-					if (face_id == 0)
-					{
-						printf("(NEG_I, %d)  ", point_id);
-					}
-					if (face_id == 1)
-					{
-						printf("(NEG_J, %d)  ", point_id);
-					}
-					if (face_id == 2)
-					{
-						printf("(POS_I, %d)  ", point_id);
-					}
-					if (face_id == 3)
-					{
-						printf("(POS_J, %d)  ", point_id);
-					}
-				}
-			}
-
-			printf("\n");
-		}
-	}
-}
-
 
 int check(int *ref, int *output, int length)
 {
