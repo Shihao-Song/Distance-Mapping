@@ -14,7 +14,7 @@
 void initVolume(uchar *, int, int, int);
 void printVolume(uchar *, int, int, int);
 int check(int *, int *, int);
-void printResult(int *vol, int height, int width, int depth);
+void printResult(float *ed, int height, int width, int depth);
 
 /*
 	The following functions should be further optimized before putting into
@@ -65,6 +65,7 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 							cfv_i, 
 							temp_j + 0.5 * add_j, 
 							temp_k + 0.5 * add_k);
+				
 				if(temp_dist < dist)
 				{
 					dist = temp_dist;
@@ -75,7 +76,7 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 	}
 
 	// When processing NEG/POS_I direction
-	if (unchanged == 1)
+	else if (unchanged == 1)
 	{
 		double temp_i = cfv_i - 0.5;
 
@@ -101,7 +102,7 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 	}
 
 	// When processing NEG/POS_K direction	
-	if (unchanged == 2)
+	else if (unchanged == 2)
 	{
 		double temp_i = cfv_i - 0.5;
 
@@ -131,7 +132,7 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 
 double distToClosetFacePointOfFV(int i, int j, int k,
 			int cfv_i, int cfv_j, int cfv_k,
-		       	int cfv_val)
+		       	uchar cfv_val)
 {
 	double dist = DBL_MAX;
 	
@@ -216,7 +217,41 @@ double distToClosetFacePointOfFV(int i, int j, int k,
 	return dist;
 }
 
+void finalED (int *FT, uchar *raw_vol, int height, int width, int depth, float *ed_out)
+{
+	int slice_stride = height * width;
 
+	int i, j, k;
+
+	for (k = 0; k < depth; k++)
+	{
+		for (i = 0; i < height; i++)
+		{
+			for (j = 0; j < width; j++)
+			{
+				int dep_id = FT[k * slice_stride + i * width + j] / slice_stride;
+				
+				int row_id = FT[k * slice_stride + i * width + j] \
+						% slice_stride / width;
+
+				int col_id = FT[k * slice_stride + i * width + j] \
+					     	% slice_stride % width;
+				
+				if (row_id == i && col_id == j && k == dep_id)
+				{
+					ed_out[k * slice_stride + i * width + j] = 0.0;
+				}
+				else
+				{
+					ed_out[k * slice_stride + i * width + j] = \
+						distToClosetFacePointOfFV(i, j, k, \
+						row_id, col_id, dep_id, \
+						raw_vol[FT[k * slice_stride + i * width + j]]); 
+				}
+			}
+		}
+	}
+}
 
 int main()
 {
@@ -286,8 +321,11 @@ int main()
 	// Check the closet boundary point
 		
 
-	printResult(output_0, HEIGHT, WIDTH, DEPTH);
 
+	float *ed_out = (float *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(float));
+	finalED (output_0, input, HEIGHT, WIDTH, DEPTH, ed_out);
+	printResult(ed_out, HEIGHT, WIDTH, DEPTH);
+	free(ed_out);
 	/*
 		GPU Solutions
 	*/
@@ -528,7 +566,8 @@ void printVolume(uchar *vol, int height, int width, int depth)
 	}
 }
 
-void printResult(int *vol, int height, int width, int depth)
+void printResult(float *ed, int height, int width, int depth)
+//void printResult(int *vol, int height, int width, int depth)
 {
 	int slice_stride = height * width;
 
@@ -537,22 +576,12 @@ void printResult(int *vol, int height, int width, int depth)
 	for (k = 0; k < depth; k++)
 	{
 		printf("Image Slice: %d\n", k);
-
+		
 		for (i = 0; i < height; i++)
 		{
 			for (j = 0; j < width; j++)
 			{
-				int row_id = vol[k * slice_stride + i * width + j] / width;
-				int col_id = vol[k * slice_stride + i * width + j] % width;
-				
-				if (row_id == i && col_id == j)
-				{
-					printf("****** ");
-				}
-				else
-				{
-					printf("(%d, %d) ", row_id, col_id);
-				}
+				printf("%5f  ", ed[k * slice_stride + i * width + j]);
 			}
 			printf("\n");
 		}
