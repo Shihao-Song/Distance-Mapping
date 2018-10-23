@@ -32,11 +32,50 @@ double distToClosetFacePointOfFV(int i, int j, int k,
 	// If the CFV has negative i face
 	if (isKthBitSet(cfv_val, 1))
 	{
-		distToFacePoint
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+	}
+	
+	// If the CFV has negative j face
+	if (isKthBitSet(cfv_val, 2))
+	{
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+	}
+	
+	// If the CFV has negative k face
+	if (isKthBitSet(cfv_val, 3))
+	{
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+	}
+	
+	// If the CFV has negative i face
+	if (isKthBitSet(cfv_val, 1))
+	{
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+	}
+	
+	// If the CFV has negative i face
+	if (isKthBitSet(cfv_val, 1))
+	{
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
 	}
 
-	// If the CFV has negative j face
-
+	// If the CFV has negative i face
+	if (isKthBitSet(cfv_val, 1))
+	{
+		distToFacePoint(1, 
+				(double)i, (double)j, (double)k, 
+				(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
+	}
 }
 
 double distToFacePoint(int unchanged, // which dimension stays unchanged
