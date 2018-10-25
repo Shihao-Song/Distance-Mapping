@@ -103,9 +103,14 @@ void RunVoronoiFT2D(int height, int width, int depth, int *vol)
 			{
 				if (vol[k * slice_stride + i * width + j] != -1)
 				{
-					int fv_k = vol[k * slice_stride + i * width + j] / slice_stride;
-					int fv_i = (vol[k * slice_stride + i * width + j] % slice_stride) / width;
-					int fv_j = (vol[k * slice_stride + i * width + j] % slice_stride) % width;
+					int fv_k = vol[k * slice_stride + i * width + j] \
+							/ slice_stride;
+					
+					int fv_i = (vol[k * slice_stride + i * width + j] \
+							% slice_stride) / width;
+					
+					int fv_j = (vol[k * slice_stride + i * width + j] \
+							% slice_stride) % width;
 					
 					if(g.size < 2)
 					{
@@ -188,9 +193,14 @@ void RunVoronoiFT3D(int height, int width, int depth, int *vol)
 			{
 				if (vol[k * slice_stride + i * width + j] != -1)
 				{
-					int fv_k = vol[k * slice_stride + i * width + j] / slice_stride;
-					int fv_i = (vol[k * slice_stride + i * width + j] % slice_stride) / width;
-					int fv_j = (vol[k * slice_stride + i * width + j] % slice_stride) % width;
+					int fv_k = vol[k * slice_stride + i * width + j] \
+							/ slice_stride;
+
+					int fv_i = (vol[k * slice_stride + i * width + j] \
+							% slice_stride) / width;
+
+					int fv_j = (vol[k * slice_stride + i * width + j] \
+							% slice_stride) % width;
 					
 					if(g.size < 2)
 					{
@@ -253,14 +263,6 @@ void RunVoronoiFT3D(int height, int width, int depth, int *vol)
 
 int removeFT2D(GNodes *g, int *w, int *Rd)
 {
-	/*
-	*g contains u, v; *ele indicates w
-
-	To verify that the inequality (Xuv)d > (Xvw)d is equivalent to the inequality
-	c * [DELTA(v, Rd)]^2 - b * [DELTA(u, Rd)]^2 - a * [DELTA(w, Rd)]^2 - abc > 0
-
-	where a = vd - ud, b = wd - vd, c = wd - ud = a + b
-	*/
 	node u = g->stack[g->size - 2];
 	node v = g->stack[g->size - 1];
 

@@ -17,252 +17,6 @@ void printVolume(uchar *, int, int, int);
 int check(int *, int *, int);
 void printResult(float *ed, int height, int width, int depth);
 
-/*
-	The following functions should be further optimized before putting into
-	Plastimatch.	
-*/
-
-bool isKthBitSet(int n, int k) 
-{ 
-    if (n & (1 << (k - 1))) 
-        return 1; 
-    else
-        return 0; 
-}
-
-/*
-	TODO - Spacing 
-*/
-double calcDist(double i, double j, double k, \
-		double target_i, double target_j, double target_k)
-{
-	double result = (i - target_i) * (i - target_i) + \
-			(j - target_j) * (j - target_j) + \
-			(k - target_k) * (k - target_k);
-
-	return sqrt(result);	
-}
-
-double distToFacePoint(int unchanged, // which dimension stays unchanged
-			double i, double j, double k, 
-			double cfv_i, double cfv_j, double cfv_k)
-{
-	double dist = DBL_MAX;
-
-	// When processing NEG/POS_J direction
-	if (unchanged == 0)
-	{
-		double temp_j = cfv_j - 0.5;
-
-		int add_j;
-		for (add_j = 0; add_j < 3; add_j++)
-		{
-			double temp_k = cfv_k - 0.5;
-
-			int add_k;
-			for (add_k = 0; add_k < 3; add_k++)
-			{
-				double temp_dist = calcDist(i, j, k,
-							cfv_i, 
-							temp_j + 0.5 * add_j, 
-							temp_k + 0.5 * add_k);
-				
-				if(temp_dist < dist)
-				{
-					dist = temp_dist;
-				}
-
-			}
-		}
-	}
-
-	// When processing NEG/POS_I direction
-	else if (unchanged == 1)
-	{
-		double temp_i = cfv_i - 0.5;
-
-		int add_i;
-		for (add_i = 0; add_i < 3; add_i++)
-		{
-			
-			double temp_k = cfv_k - 0.5;
-
-			int add_k;
-			for (add_k = 0; add_k < 3; add_k++)
-			{
-				double temp_dist = calcDist(i, j, k,
-							temp_i + 0.5 * add_i, 
-							cfv_j, 
-							temp_k + 0.5 * add_k);
-				if(temp_dist < dist)
-				{
-					dist = temp_dist;
-				}
-			}
-		}
-	}
-
-	// When processing NEG/POS_K direction	
-	else if (unchanged == 2)
-	{
-		double temp_i = cfv_i - 0.5;
-
-		int add_i;
-		for (add_i = 0; add_i < 3; add_i++)
-		{
-			
-			double temp_j = cfv_j - 0.5;
-
-			int add_j;
-			for (add_j = 0; add_j < 3; add_j++)
-			{
-				double temp_dist = calcDist(i, j, k,
-							temp_i + 0.5 * add_i, 
-							temp_j + 0.5 * add_j, 
-							cfv_k);
-				if(temp_dist < dist)
-				{
-					dist = temp_dist;
-				}
-			}
-		}
-	}
-	
-	return dist;
-}
-
-double distToClosetFacePointOfFV(int i, int j, int k,
-			int cfv_i, int cfv_j, int cfv_k,
-		       	uchar cfv_val)
-{
-	double dist = DBL_MAX;
-	
-	// If the CFV has negative i face
-	if (isKthBitSet(cfv_val, 1))
-	{
-		double temp_dist = distToFacePoint(1, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
-		
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-	
-	// If the CFV has negative j face
-	if (isKthBitSet(cfv_val, 2))
-	{
-		double temp_dist = distToFacePoint(0, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i-0.5, (double)cfv_j, (double)cfv_k);
-		
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-	
-	// If the CFV has negative k face
-	if (isKthBitSet(cfv_val, 3))
-	{
-		double temp_dist = distToFacePoint(2, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i, (double)cfv_j, (double)cfv_k-0.5);
-
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-	
-	// If the CFV has positive i face
-	if (isKthBitSet(cfv_val, 4))
-	{
-		double temp_dist = distToFacePoint(1, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i, (double)cfv_j+0.5, (double)cfv_k);
-
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-	
-	// If the CFV has positive j face
-	if (isKthBitSet(cfv_val, 5))
-	{
-		double temp_dist = distToFacePoint(0, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i+0.5, (double)cfv_j, (double)cfv_k);
-
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-
-	// If the CFV has positive k face
-	if (isKthBitSet(cfv_val, 6))
-	{
-		double temp_dist = distToFacePoint(2, 
-					(double)i, (double)j, (double)k, 
-					(double)cfv_i, (double)cfv_j, (double)cfv_k+0.5);
-
-		if (temp_dist < dist)
-		{
-			dist = temp_dist;
-		}
-	}
-
-	return dist;
-}
-
-void finalED (char *scheme, int *FT, uchar *raw_vol, int height, int width, int depth, float *ed_out)
-{
-	int slice_stride = height * width;
-
-	int i, j, k;
-
-	for (k = 0; k < depth; k++)
-	{
-		for (i = 0; i < height; i++)
-		{
-			for (j = 0; j < width; j++)
-			{
-				int dep_id = FT[k * slice_stride + i * width + j] / slice_stride;
-				
-				int row_id = FT[k * slice_stride + i * width + j] \
-						% slice_stride / width;
-
-				int col_id = FT[k * slice_stride + i * width + j] \
-					     	% slice_stride % width;
-				
-				if (row_id == i && col_id == j && k == dep_id)
-				{
-					ed_out[k * slice_stride + i * width + j] = 0.0;
-				}
-				else
-				{
-					if (strcmp(scheme, "--center-face") == 0)
-					{
-						ed_out[k * slice_stride + i * width + j] = \
-						distToClosetFacePointOfFV(i, j, k, \
-						row_id, col_id, dep_id, \
-						raw_vol[FT[k * slice_stride + i * width + j]]); 
-					}
-					else if (strcmp(scheme, "--center-center") == 0)
-					{
-						ed_out[k * slice_stride + i * width + j] = \
-						calcDist(i, j, k, \
-						row_id, col_id, dep_id); 
-					}
-				}
-			}
-		}
-	}
-}
-
 int main(int argc, char* argv[])
 {
 	// Initialize Input and Output Data
@@ -311,12 +65,11 @@ int main(int argc, char* argv[])
 	initVolume(input, HEIGHT, WIDTH, DEPTH);	
 
 	// Print Volume
-	printVolume(input, HEIGHT, WIDTH, DEPTH);
+	// printVolume(input, HEIGHT, WIDTH, DEPTH);
 
 	// Generate Reference Result
 	exhaustiveFT(input, HEIGHT, WIDTH, DEPTH, ref);
 
-	
 
 	// Compute using Maurer
 	struct timeval stopCPU, startCPU;
@@ -329,8 +82,6 @@ int main(int argc, char* argv[])
 	//printf("CPU Execution Time: %ld ms. \n", mtime);
 
 	// Check the closet boundary point
-		
-
 
 	float *ed_out = (float *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(float));
 	finalED (argv[1], output_0, input, HEIGHT, WIDTH, DEPTH, ed_out);
@@ -492,6 +243,46 @@ void initVolume(uchar *vol, int height, int width, int depth)
 	int slice_stride = height * width;
 
 	/*
+		Init a cube 
+	*/
+	int row_id = 0;
+	int col_id = 0;
+	int dep_id = 0;
+
+	/* Front and back */
+	for (row_id = 1; row_id < 6; row_id++)
+	{
+		for (col_id = 1; col_id < 6; col_id++)
+		{
+			vol[0 * slice_stride + row_id * width + col_id] |= 0x04;
+
+			vol[9 * slice_stride + row_id * width + col_id] |= 0x20;
+		}
+	}
+
+	/* Left and right */
+	for (dep_id = 0; dep_id < depth; dep_id++)
+	{
+		for (row_id = 1; row_id < 6; row_id++)
+		{
+			vol[dep_id * slice_stride + row_id * width + 1] |= 0x01;
+			
+			vol[dep_id * slice_stride + row_id * width + 5] |= 0x08;
+		}
+	}
+
+	/* Top and bottom */
+	for (dep_id = 0; dep_id < depth; dep_id++)
+	{
+		for (col_id = 1; col_id < 6; col_id++)
+		{
+			vol[dep_id * slice_stride + 1 * width + col_id] |= 0x02;
+
+			vol[dep_id * slice_stride + 5 * width + col_id] |= 0x10;
+		}
+	}
+
+	/*
 	for (int ite = 0; ite < 5; ite++)
 	{
 		int r_row = rand() % height;
@@ -501,7 +292,8 @@ void initVolume(uchar *vol, int height, int width, int depth)
 		vol[r_dep * slice_stride + r_row * width + r_col] = 1;
 	}
 	*/
-	
+
+	/*	
 	int r_row = 3;
 	int r_col = 3;
 	int r_dep = 0;
@@ -551,6 +343,7 @@ void initVolume(uchar *vol, int height, int width, int depth)
 	r_col = 6;
 	r_dep = 0;
 	vol[r_dep * slice_stride + r_row * width + r_col] = 0x18;
+	*/
 }
 
 void printVolume(uchar *vol, int height, int width, int depth)
@@ -585,7 +378,7 @@ void printResult(float *ed, int height, int width, int depth)
 
 	for (k = 0; k < depth; k++)
 	{
-		printf("Image Slice: %d\n", k);
+		printf("Slice of interest: %d\n", k);
 		
 		for (i = 0; i < height; i++)
 		{

@@ -5,8 +5,8 @@
 #include <stdlib.h>
 
 /*
-	GNodes is a stack data structure that is used
-	in VoronoiFT
+	GNodes is a (stack) data structure that is used
+	in VoronoiFT (maurer's FT).
 */
 
 typedef struct

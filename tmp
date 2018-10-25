@@ -1,0 +1,69 @@
+// This file contains some of my previously GPU prototype, not used anymore
+template <typename T>
+__global__ void raster_scan_GPU_v1(T *input, int dim, int dim_len, \
+						int height, int width, int depth, \
+						int *dev_output)
+{
+	__shared__ int temp[1024]; // This is fixed
+
+	int thread_dep_id = threadIdx.z + blockIdx.z * blockDim.z;
+	int thread_row_id = threadIdx.y + blockIdx.y * blockDim.y;
+	int thread_col_id = threadIdx.x + blockIdx.x * blockDim.x;
+
+	int vol_slice_stride = height * width;
+	int shared_slice_stride = blockDim.x * blockDim.y;
+
+	// No thread divergence here
+	if (dim == 1)
+	{
+		temp[threadIdx.z * shared_slice_stride + threadIdx.y * blockDim.x + threadIdx.x] = \
+		(input[thread_dep_id * vol_slice_stride + thread_row_id * width + thread_col_id] != 0) ? \
+		thread_dep_id * vol_slice_stride + thread_row_id * width + thread_col_id : -1;
+	}
+	else
+	{
+		temp[threadIdx.z * shared_slice_stride + threadIdx.y * blockDim.x + threadIdx.x] = \
+		input[thread_dep_id * vol_slice_stride + thread_row_id * width + thread_col_id];
+	}
+
+	__syncthreads();
+
+	int fv_index = -1;
+	double minDist = DBL_MAX;
+	int cfv_index = -1;
+
+	int i;
+	for (i = 0; i < dim_len; i++)
+	{
+		if (dim == 1)
+		{
+			fv_index = temp[threadIdx.z * shared_slice_stride + \
+						threadIdx.y * blockDim.x + i];
+		}
+		else if (dim == 2)
+		{
+			fv_index = temp[threadIdx.z * shared_slice_stride + \
+						i * blockDim.x + threadIdx.x];
+		}
+		else
+		{
+			fv_index = temp[i * shared_slice_stride + \
+						threadIdx.y * blockDim.x + threadIdx.x];
+		}
+
+		if(fv_index != -1)
+		{
+	
+			double tempDist = ED(thread_row_id, thread_col_id, thread_dep_id, \
+								fv_index, height, width, depth);
+			
+			if (tempDist < minDist)
+			{
+				minDist = tempDist;
+				cfv_index = fv_index;
+			}
+		}
+	}
+
+	dev_output[thread_dep_id * vol_slice_stride + thread_row_id * width + thread_col_id] = cfv_index;
+} 

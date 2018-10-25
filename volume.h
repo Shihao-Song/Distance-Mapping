@@ -2,8 +2,8 @@
 //#define WIDTH 256
 //#define DEPTH 64
 
-#define HEIGHT 8
-#define WIDTH 8
-#define DEPTH 1
+#define HEIGHT 7
+#define WIDTH 7
+#define DEPTH 10
 
 typedef unsigned char uchar;
