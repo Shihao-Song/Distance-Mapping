@@ -13,9 +13,9 @@
 	The exhaustive search (reference solution) will take significant amount of time if
 	the volume is huge!
 */
-#define HEIGHT 7
-#define WIDTH 7
-#define DEPTH 10
+#define HEIGHT 64
+#define WIDTH 64
+#define DEPTH 16
 
 typedef unsigned char uchar;
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	genFC(raw_vol); // Generate a feature cuboid 
 	//genRandomFV(raw_vol, 60);
 
-	float sp[3] = {1.0, 1.0, 1.0}; // Voxel spacings, {i (height of a voxel), 
+	float sp[3] = {1.0, 2.5, 1.5}; // Voxel spacings, {i (height of a voxel), 
 				//		j (width of a voxel), 
 				//		k (depth of a voxel)}
 	float sp2[3] = {
@@ -86,9 +86,11 @@ int main(int argc, char *argv[])
 		Step three: compute using exhaustive and maurer
 	***************************************************************/
 	// Perform FT using exhaustive search
+	printf("\nGenerating reference solution...\n");
 	exhaustiveFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, ref_ft);
 
 	// Perform FT using maurer's
+	printf("\nPerforming Feature Transformation using Maurer...\n");
 	struct timeval stopCPU, startCPU;
 	gettimeofday(&startCPU, NULL);
 	maurerFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, maurer_ft);
@@ -113,7 +115,7 @@ int main(int argc, char *argv[])
 	/*************************************************************
 		Step five: perform distance mapping for maurer FT
 	**************************************************************/
-	printf("\nPerforming final distance transformation for maurer's FT. \n");
+	printf("\nPerforming final distance transformation for maurer's FT... \n");
 		
 	float *dist_trans = (float *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(float));	
 
@@ -124,9 +126,6 @@ int main(int argc, char *argv[])
 	useconds = stopCPU.tv_usec - startCPU.tv_usec;
 	mtime = seconds * 1000 + useconds / 1000.0;
 	printf("\nOpenMP Execution Time of Distance Transformation: %ld ms. \n", mtime);
-
-	printDistTransformation(dist_trans);
-	
 	/*
 		Free memory resource
 	*/

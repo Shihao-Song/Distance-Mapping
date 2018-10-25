@@ -9,12 +9,17 @@ void distTransformation (char *scheme,
 {
 	int slice_stride = height * width;
 
-	int i, j, k;
-
+	int k;
+	#pragma omp parallel private(k)
+	{
+	
+	#pragma omp for
 	for (k = 0; k < depth; k++)
 	{
+		int i;
 		for (i = 0; i < height; i++)
 		{
+			int j;
 			for (j = 0; j < width; j++)
 			{
 				int dep_id = FT[k * slice_stride + i * width + j] / slice_stride;
@@ -51,6 +56,7 @@ void distTransformation (char *scheme,
 				}
 			}
 		}
+	}
 	}
 }
 
