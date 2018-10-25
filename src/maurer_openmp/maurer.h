@@ -4,25 +4,29 @@
 #include <math.h>
 #include <float.h>
 
-#include "volume.h"
+#include "omp.h"
+
 #include "gnodes.h"
+
+typedef unsigned char uchar;
 
 /*
 	maurerFT: takes the raw volume and generates its FT (Feature Transformation)
 */
-void maurerFT(uchar *, int, int, int, int *);
+void maurerFT(uchar *, float *, int, int, int, int *);
 
 /*
 	Helper functions, the following functions are the building blocks of maurerFT()
 */
-void VoronoiFT(int, uchar *, int, int, int, int *);
-void RunVoronoiFT1D(uchar *, int, int, int, int *);
-void RunVoronoiFT2D(int, int, int, int *);
-void RunVoronoiFT3D(int, int, int, int *);
+void VoronoiFT(int, uchar *, float *, int, int, int, int *);
 
-int removeFT2D(GNodes *g, int *w, int *Rd);
-int removeFT3D(GNodes *g, int *w, int *Rd);
+void RunVoronoiFT1D(uchar *, float *, int, int, int, int *);
+void RunVoronoiFT2D(float *, int, int, int, int *);
+void RunVoronoiFT3D(float *, int, int, int, int *);
 
-double ED(int, int, int, node *); // Calculate Euclidean Distance
+int removeFT2D(float *, GNodes *g, int *w, int *Rd);
+int removeFT3D(float *, GNodes *g, int *w, int *Rd);
+
+double ED(float *, int, int, int, node *); // Calculate Euclidean Distance
 
 #endif

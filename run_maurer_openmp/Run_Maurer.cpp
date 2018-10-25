@@ -1,21 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
+
+#include "../src/exhaustive_ft/exhaustiveFT.h"
+#include "../src/maurer_openmp/maurer.h"
 
 /*
 	Volume info
+
+	The exhaustive search (reference solution) will take significant amount of time if
+	the volume is huge!
 */
-#define HEIGHT 9
-#define WIDTH 9
-#define DEPTH 3
+#define HEIGHT 64
+#define WIDTH 64
+#define DEPTH 16
 
 typedef unsigned char uchar;
 
 /*
 	Functions just for testing
 */
-void genFV(uchar *); // Simply generate a feature cuboid as shown in report
-void check(float *, float *); // Check the Maurer's solution with the reference solution
+void genFC(uchar *); // Simply generate a feature cuboid as shown in report (has boundary face)
+void genRandomFV(uchar *, int); // Generate random number of feature voxels (no boundary face)
+int check(int *, int *, int); // Check the Maurer's FT with the reference FT
 
 /*
 	Debugging functions, do not invoke these if volume is huge.
@@ -31,9 +39,9 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	/*
+	/***************************************************
 		Step one: initialize testing volume
-	*/
+	****************************************************/
 	uchar *raw_vol;
 
 	raw_vol = (uchar *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(uchar));
@@ -44,18 +52,74 @@ int main(int argc, char *argv[])
 		raw_vol[i] = 0;
 	}
 
-	genFV(raw_vol); // Generate some feature voxels
+	//genFC(raw_vol); // Generate a feature cuboid 
+	genRandomFV(raw_vol, 60);
 
-	printVolume(raw_vol);
+	float sp[3] = {1.0, 3.0, 2.0}; // Voxel spacings, {i (height of a voxel), 
+				//		j (width of a voxel), 
+				//		k (depth of a voxel)}
+	float sp2[3] = {
+		sp[0] * sp[0],
+	       	sp[1] * sp[1],
+		sp[2] * sp[2]	
+	};
+
+	/*********************************************
+		Step two: initialize FT output	
+	**********************************************/
+	// ref_ft : the FT performed by exhaustive search (src/exhaustive_ft)
+	int *ref_ft = (int *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(int));
+	
+	// maurer_ft : the FT performed by MAURER
+	int *maurer_ft = (int *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(int));
+
+	// Initialization
+	for (int i = 0; i < HEIGHT * WIDTH * DEPTH; i++)
+	{
+		ref_ft[i] = -1;
+		maurer_ft[i] = -1;
+	}	
+
+	/**************************************************************
+		Step three: compute using exhaustive and maurer
+	***************************************************************/
+	// Perform FT using exhaustive search
+	exhaustiveFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, ref_ft);
+
+	// Perform FT using maurer's
+	struct timeval stopCPU, startCPU;
+	gettimeofday(&startCPU, NULL);
+	maurerFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, maurer_ft);
+	gettimeofday(&stopCPU, NULL);
+	long seconds = stopCPU.tv_sec - startCPU.tv_sec;
+	long useconds = stopCPU.tv_usec - startCPU.tv_usec;
+	long mtime = seconds * 1000 + useconds / 1000.0;
+	printf("OpenMP Execution Time: %ld ms. \n", mtime);	
+
+	/************************************************
+		Step four: check the generated FT
+	*************************************************/
+	if (check(ref_ft, maurer_ft, HEIGHT * WIDTH * DEPTH) == 0)
+	{
+		printf("Maurer Testing: Error! \n");
+	}
+	else
+	{
+		printf("Maurer Testing: Successful! \n");
+	}
+
 	/*
 		Free memory resource
 	*/
 	free(raw_vol);
 
+	free(ref_ft);
+	free(maurer_ft);
+
 	return 1;
 }
 
-void genFV(uchar *vol)
+void genFC(uchar *vol)
 {
 	/* Distance between slices */
 	int slice_stride = HEIGHT * WIDTH;
@@ -100,6 +164,28 @@ void genFV(uchar *vol)
 	}
 }
 
+// percent% of the voxels will be set to feature
+void genRandomFV(uchar *vol, int percent)
+{
+	int num_fv = HEIGHT * WIDTH * DEPTH * percent / 100;
+
+	// Random seed
+	srand(time(NULL));
+
+	// Distance between slices
+	int slice_stride = HEIGHT * WIDTH;
+
+	int ite;
+	for (ite = 0; ite < num_fv; ite++)
+	{
+		int r_row = rand() % HEIGHT;
+		int r_col = rand() % WIDTH;
+		int r_dep = rand() % DEPTH;
+
+		vol[r_dep * slice_stride + r_row * WIDTH + r_col] = 1;
+	}	
+}
+
 void printVolume(uchar *vol)
 {
 	// Distance between slices
@@ -121,4 +207,18 @@ void printVolume(uchar *vol)
 		}
 		printf("\n");
 	}
+}
+
+int check(int *ref, int *result, int length)
+{
+	int i;
+	for(i = 0; i < length; i++)
+	{
+		if(ref[i] != result[i])
+		{
+			return 0;
+		}
+	}
+
+	return 1;
 }

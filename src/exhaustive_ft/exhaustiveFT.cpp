@@ -1,8 +1,8 @@
-#include "volume.h"
 #include "exhaustiveFT.h"
 
-void exhaustiveFT(uchar *vol, int height, int width, int depth, \
-	int *output)
+void exhaustiveFT(uchar *vol, float *sp2, 
+		int height, int width, int depth, \
+		int *output)
 {
 	// Distance between slices
 	int slice_stride = height * width;
@@ -14,18 +14,22 @@ void exhaustiveFT(uchar *vol, int height, int width, int depth, \
 		{
 			for (j = 0; j < width; j++)
 			{
-				exhaustiveSearch(i, j, k, vol, \
-					height, width, depth, output);
+				exhaustiveSearch(vol, sp2, \
+						i, j, k, \
+						height, width, depth, \
+						output);
 			}
 		}
 	}
 }
 
-void exhaustiveSearch(int vol_i, int vol_j, int vol_k, uchar *vol, \
-	int height, int width, int depth, int *output)
+void exhaustiveSearch(uchar *vol, float *sp2, \
+		int vol_i, int vol_j, int vol_k,\
+		int height, int width, int depth, \
+		int *output)
 {
 
-	int minDist = INT_MAX;
+	double minDist = DBL_MAX;
 
 	// Following variables are used to record the positions of
 	// the closet feature voxel
@@ -43,9 +47,9 @@ void exhaustiveSearch(int vol_i, int vol_j, int vol_k, uchar *vol, \
 			{
 				if (vol[k * slice_stride + i * width + j] != 0)
 				{
-					int tempDist = (i - vol_i) * (i - vol_i) + \
-							(j - vol_j) * (j - vol_j) + \
-							(k - vol_k) * (k - vol_k);
+					double tempDist = (i - vol_i) * (i - vol_i) * sp2[0] + \
+							(j - vol_j) * (j - vol_j) * sp2[1] + \
+							(k - vol_k) * (k - vol_k) * sp2[2];
 
 					if (tempDist < minDist)
 					{

@@ -1,6 +1,7 @@
-SOURCE	:= Run_Maurer.cpp 
-CC 	:= gcc
-FLAGS 	:= -O3
+SOURCE	:= Run_Maurer.cpp ../src/exhaustive_ft/exhaustiveFT.cpp ../src/maurer_openmp/maurer.cpp ../src/maurer_openmp/gnodes.cpp
+
+CC 	:= g++
+FLAGS 	:= -O3 -fopenmp
 TARGET	:= Run_Maurer
 
 
