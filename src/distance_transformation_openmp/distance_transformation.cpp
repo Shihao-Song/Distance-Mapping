@@ -1,10 +1,11 @@
-#include "distance_mapping.h"
+#include "distance_transformation.h"
 
-void distMapping (char *scheme,
-		int *FT, 
-		uchar *raw_vol, 
-		int height, int width, int depth, 
-		float *ed_out)
+void distTransformation (char *scheme,
+			int *FT, 
+			uchar *raw_vol,
+		       	float *sp2,	
+			int height, int width, int depth, 
+			float *ed_out)
 {
 	int slice_stride = height * width;
 
@@ -33,14 +34,18 @@ void distMapping (char *scheme,
 					if (strcmp(scheme, "--center-face") == 0)
 					{
 						ed_out[k * slice_stride + i * width + j] = \
-						distToClosetFacePointOfCFV(i, j, k, \
+						distToClosetFacePointOfCFV(
+						sp2, \
+						i, j, k, \
 						row_id, col_id, dep_id, \
 						raw_vol[FT[k * slice_stride + i * width + j]]); 
 					}
 					else if (strcmp(scheme, "--center-center") == 0)
 					{
 						ed_out[k * slice_stride + i * width + j] = \
-						calcDist(i, j, k, \
+						calcDist(
+						sp2, \
+						i, j, k, \
 						row_id, col_id, dep_id); 
 					}
 				}
@@ -49,7 +54,9 @@ void distMapping (char *scheme,
 	}
 }
 
-double distToClosetFacePointOfCFV(int i, int j, int k,
+double distToClosetFacePointOfCFV(
+				float *sp2,
+				int i, int j, int k,
 				int cfv_i, int cfv_j, int cfv_k,
 		       		uchar cfv_val)
 {
@@ -59,6 +66,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 1))
 	{
 		double temp_dist = distToFacePoint(1,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i, (double)cfv_j-0.5, (double)cfv_k);
 
@@ -72,6 +80,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 2))
 	{
 		double temp_dist = distToFacePoint(0,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i-0.5, (double)cfv_j, (double)cfv_k);
 
@@ -85,6 +94,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 3))
 	{
 		double temp_dist = distToFacePoint(2,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i, (double)cfv_j, (double)cfv_k-0.5);
 
@@ -98,6 +108,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 4))
 	{
 		double temp_dist = distToFacePoint(1,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i, (double)cfv_j+0.5, (double)cfv_k);
 
@@ -111,6 +122,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 5))
 	{
 		double temp_dist = distToFacePoint(0,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i+0.5, (double)cfv_j, (double)cfv_k);
 
@@ -124,6 +136,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 	if (isKthBitSet(cfv_val, 6))
 	{
 		double temp_dist = distToFacePoint(2,
+					sp2,
 					(double)i, (double)j, (double)k,
 					(double)cfv_i, (double)cfv_j, (double)cfv_k+0.5);
 
@@ -137,6 +150,7 @@ double distToClosetFacePointOfCFV(int i, int j, int k,
 }
 
 double distToFacePoint(int unchanged, // which dimension stays unchanged
+			float *sp2,
 			double i, double j, double k, 
 			double cfv_i, double cfv_j, double cfv_k)
 {
@@ -155,7 +169,9 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 			int add_k;
 			for (add_k = 0; add_k < 3; add_k++)
 			{
-				double temp_dist = calcDist(i, j, k,
+				double temp_dist = calcDist(
+							sp2,
+							i, j, k,
 							cfv_i, 
 							temp_j + 0.5 * add_j, 
 							temp_k + 0.5 * add_k);
@@ -183,7 +199,9 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 			int add_k;
 			for (add_k = 0; add_k < 3; add_k++)
 			{
-				double temp_dist = calcDist(i, j, k,
+				double temp_dist = calcDist(
+							sp2,
+							i, j, k,
 							temp_i + 0.5 * add_i, 
 							cfv_j, 
 							temp_k + 0.5 * add_k);
@@ -209,7 +227,9 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 			int add_j;
 			for (add_j = 0; add_j < 3; add_j++)
 			{
-				double temp_dist = calcDist(i, j, k,
+				double temp_dist = calcDist(
+							sp2,
+							i, j, k,
 							temp_i + 0.5 * add_i, 
 							temp_j + 0.5 * add_j, 
 							cfv_k);
@@ -224,12 +244,13 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 	return dist;
 }
 
-double calcDist(double i, double j, double k, \
+double calcDist(float *sp2,
+		double i, double j, double k, \
 		double target_i, double target_j, double target_k)
 {
-	double result = (i - target_i) * (i - target_i) + \
-			(j - target_j) * (j - target_j) + \
-			(k - target_k) * (k - target_k);
+	double result = (i - target_i) * (i - target_i) * sp2[0] + \
+			(j - target_j) * (j - target_j) * sp2[1] + \
+			(k - target_k) * (k - target_k) * sp2[2];
 
 	return sqrt(result);
 }

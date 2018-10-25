@@ -205,7 +205,7 @@ void RunVoronoiFT3D(float *sp2, int height, int width, int depth, int *vol)
 	#pragma omp parallel shared(sp2, vol) private(g, Rd, w, i)
     	{
 	g.size = 0;
-	g.max_size = height;
+	g.max_size = depth;
 	g.stack = (node *)malloc(g.max_size * sizeof(node));
 
 	#pragma omp for

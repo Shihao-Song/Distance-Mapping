@@ -5,6 +5,7 @@
 
 #include "../src/exhaustive_ft/exhaustiveFT.h"
 #include "../src/maurer_openmp/maurer.h"
+#include "../src/distance_transformation_openmp/distance_transformation.h" 
 
 /*
 	Volume info
@@ -12,9 +13,9 @@
 	The exhaustive search (reference solution) will take significant amount of time if
 	the volume is huge!
 */
-#define HEIGHT 64
-#define WIDTH 64
-#define DEPTH 16
+#define HEIGHT 7
+#define WIDTH 7
+#define DEPTH 10
 
 typedef unsigned char uchar;
 
@@ -29,6 +30,7 @@ int check(int *, int *, int); // Check the Maurer's FT with the reference FT
 	Debugging functions, do not invoke these if volume is huge.
 */
 void printVolume(uchar *);
+void printDistTransformation(float *);
 
 int main(int argc, char *argv[])
 {
@@ -52,10 +54,10 @@ int main(int argc, char *argv[])
 		raw_vol[i] = 0;
 	}
 
-	//genFC(raw_vol); // Generate a feature cuboid 
-	genRandomFV(raw_vol, 60);
+	genFC(raw_vol); // Generate a feature cuboid 
+	//genRandomFV(raw_vol, 60);
 
-	float sp[3] = {1.0, 3.0, 2.0}; // Voxel spacings, {i (height of a voxel), 
+	float sp[3] = {1.0, 1.0, 1.0}; // Voxel spacings, {i (height of a voxel), 
 				//		j (width of a voxel), 
 				//		k (depth of a voxel)}
 	float sp2[3] = {
@@ -94,20 +96,37 @@ int main(int argc, char *argv[])
 	long seconds = stopCPU.tv_sec - startCPU.tv_sec;
 	long useconds = stopCPU.tv_usec - startCPU.tv_usec;
 	long mtime = seconds * 1000 + useconds / 1000.0;
-	printf("OpenMP Execution Time: %ld ms. \n", mtime);	
+	printf("\nOpenMP Execution Time of Maurer FT: %ld ms. \n", mtime);	
 
 	/************************************************
 		Step four: check the generated FT
 	*************************************************/
 	if (check(ref_ft, maurer_ft, HEIGHT * WIDTH * DEPTH) == 0)
 	{
-		printf("Maurer Testing: Error! \n");
+		printf("\nMaurer Testing: Error! \n");
 	}
 	else
 	{
-		printf("Maurer Testing: Successful! \n");
+		printf("\nMaurer Testing: Successful! (Ref Solution: Exhaustive Search) \n");
 	}
 
+	/*************************************************************
+		Step five: perform distance mapping for maurer FT
+	**************************************************************/
+	printf("\nPerforming final distance transformation for maurer's FT. \n");
+		
+	float *dist_trans = (float *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(float));	
+
+	gettimeofday(&startCPU, NULL);
+	distTransformation(argv[1], maurer_ft, raw_vol, sp2, HEIGHT, WIDTH, DEPTH, dist_trans);
+	gettimeofday(&stopCPU, NULL);
+	seconds = stopCPU.tv_sec - startCPU.tv_sec;
+	useconds = stopCPU.tv_usec - startCPU.tv_usec;
+	mtime = seconds * 1000 + useconds / 1000.0;
+	printf("\nOpenMP Execution Time of Distance Transformation: %ld ms. \n", mtime);
+
+	printDistTransformation(dist_trans);
+	
 	/*
 		Free memory resource
 	*/
@@ -115,6 +134,7 @@ int main(int argc, char *argv[])
 
 	free(ref_ft);
 	free(maurer_ft);
+	free(dist_trans);
 
 	return 1;
 }
@@ -221,4 +241,26 @@ int check(int *ref, int *result, int length)
 	}
 
 	return 1;
+}
+
+void printDistTransformation(float *dist_trans)
+{
+	int slice_stride = HEIGHT * WIDTH;
+
+        int i, j, k;
+
+        for (k = 0; k < DEPTH; k++)
+        {
+                printf("Image Slice: %d\n", k);
+
+                for (i = 0; i < HEIGHT; i++)
+                {
+                        for (j = 0; j < WIDTH; j++)
+                        {
+                                printf("%4f  ", dist_trans[k * slice_stride + i * WIDTH + j]);
+                        }
+                        printf("\n");
+                }
+                printf("\n");
+        }
 }
