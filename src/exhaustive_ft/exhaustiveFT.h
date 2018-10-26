@@ -5,10 +5,10 @@
 
 typedef unsigned char uchar;
 
-void exhaustiveFT(uchar *, float *, int, int, int, int *);
+void exhaustiveFT(uchar *, float *, int, int, int, double *);
 void exhaustiveSearch(uchar *, float *, \
 		int, int, int, \
 		int, int, int, \
-		int *);
+		double *);
 
 #endif

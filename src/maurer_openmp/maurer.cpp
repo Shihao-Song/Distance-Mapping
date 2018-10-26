@@ -2,7 +2,7 @@
 
 void maurerFT(uchar *vol, float *sp2, \
 	int height, int width, int depth, \
-	int *output)
+	double *output)
 {
 	int dim;
 
@@ -15,7 +15,7 @@ void maurerFT(uchar *vol, float *sp2, \
 void VoronoiFT(int dim, \
 	uchar *vol, float *sp2, \
 	int height, int width, int depth, \
-	int *output)
+	double *output)
 {
 	switch (dim)
 	{
@@ -35,7 +35,7 @@ void VoronoiFT(int dim, \
 
 void RunVoronoiFT1D(uchar *vol, float *sp2, \
 		int height, int width, int depth,\
-		int *output)
+		double *output)
 {
 
 	GNodes g;
@@ -83,9 +83,9 @@ void RunVoronoiFT1D(uchar *vol, float *sp2, \
 				}
 
 				output[k * slice_stride + i * width + j] = \
-					g.stack[ite].fv_pos[2] * slice_stride + \
+					double(g.stack[ite].fv_pos[2] * slice_stride + \
 					g.stack[ite].fv_pos[0] * width + \
-					g.stack[ite].fv_pos[1];
+					g.stack[ite].fv_pos[1]);
 			}
 			g.size = 0;
 		}
@@ -94,7 +94,7 @@ void RunVoronoiFT1D(uchar *vol, float *sp2, \
 	}
 }
 
-void RunVoronoiFT2D(float *sp2, int height, int width, int depth, int *vol)
+void RunVoronoiFT2D(float *sp2, int height, int width, int depth, double *vol)
 {
 	GNodes g;
 	
@@ -120,15 +120,15 @@ void RunVoronoiFT2D(float *sp2, int height, int width, int depth, int *vol)
 			int i;
 			for (i = 0; i < height; i++)
 			{
-				if (vol[k * slice_stride + i * width + j] != -1)
+				if (vol[k * slice_stride + i * width + j] != -1.0)
 				{
-					int fv_k = vol[k * slice_stride + i * width + j] \
+					int fv_k = int(vol[k * slice_stride + i * width + j]) \
 							/ slice_stride;
 					
-					int fv_i = (vol[k * slice_stride + i * width + j] \
+					int fv_i = (int(vol[k * slice_stride + i * width + j]) \
 							% slice_stride) / width;
 					
-					int fv_j = (vol[k * slice_stride + i * width + j] \
+					int fv_j = (int(vol[k * slice_stride + i * width + j]) \
 							% slice_stride) % width;
 					
 					if(g.size < 2)
@@ -180,9 +180,9 @@ void RunVoronoiFT2D(float *sp2, int height, int width, int depth, int *vol)
 				}
 
 				vol[k * slice_stride + i * width + j] = \
-					g.stack[minIndex].fv_pos[2] * slice_stride + \
+					double(g.stack[minIndex].fv_pos[2] * slice_stride + \
 					g.stack[minIndex].fv_pos[0] * width + \
-					g.stack[minIndex].fv_pos[1];
+					g.stack[minIndex].fv_pos[1]);
 			}
 			g.size = 0;
 		}
@@ -191,7 +191,7 @@ void RunVoronoiFT2D(float *sp2, int height, int width, int depth, int *vol)
 	}
 }
 
-void RunVoronoiFT3D(float *sp2, int height, int width, int depth, int *vol)
+void RunVoronoiFT3D(float *sp2, int height, int width, int depth, double *vol)
 {
 	GNodes g;
 
@@ -217,15 +217,15 @@ void RunVoronoiFT3D(float *sp2, int height, int width, int depth, int *vol)
 			int k;
 			for (k = 0; k < depth; k++)
 			{
-				if (vol[k * slice_stride + i * width + j] != -1)
+				if (vol[k * slice_stride + i * width + j] != -1.0)
 				{
-					int fv_k = vol[k * slice_stride + i * width + j] \
+					int fv_k = int(vol[k * slice_stride + i * width + j]) \
 							/ slice_stride;
 
-					int fv_i = (vol[k * slice_stride + i * width + j] \
+					int fv_i = (int(vol[k * slice_stride + i * width + j]) \
 							% slice_stride) / width;
 
-					int fv_j = (vol[k * slice_stride + i * width + j] \
+					int fv_j = (int(vol[k * slice_stride + i * width + j]) \
 							% slice_stride) % width;
 					
 					if(g.size < 2)
@@ -277,9 +277,9 @@ void RunVoronoiFT3D(float *sp2, int height, int width, int depth, int *vol)
 				}
 
 				vol[k * slice_stride + i * width + j] = \
-					g.stack[minIndex].fv_pos[2] * slice_stride + \
+					double(g.stack[minIndex].fv_pos[2] * slice_stride + \
 					g.stack[minIndex].fv_pos[0] * width + \
-					g.stack[minIndex].fv_pos[1];
+					g.stack[minIndex].fv_pos[1]);
 			}
 			g.size = 0;
 		}
@@ -309,7 +309,7 @@ int removeFT2D(float *sp2, GNodes *g, int *w, int *Rd)
 		wRd += (w[i] - Rd[i]) * (w[i] - Rd[i]) * sp2[i];
 	}
 
-	return (c * vRd - b * uRd - a * wRd - a * b * c > 0);
+	return (c * vRd - b * uRd - a * wRd - a * b * c > 0.0);
 
 }
 
@@ -334,7 +334,7 @@ int removeFT3D(float *sp2, GNodes *g, int *w, int *Rd)
 		wRd += (w[i] - Rd[i]) * (w[i] - Rd[i]) * sp2[i];
 	}
 
-	return (c * vRd - b * uRd - a * wRd - a * b * c > 0);
+	return (c * vRd - b * uRd - a * wRd - a * b * c > 0.0);
 }
 
 double ED(float *sp2, \

@@ -1,11 +1,10 @@
 #include "distance_transformation.h"
 
 void distTransformation (char *scheme,
-			int *FT, 
 			uchar *raw_vol,
 		       	float *sp2,	
 			int height, int width, int depth, 
-			float *ed_out)
+			double *ed_out)
 {
 	int slice_stride = height * width;
 
@@ -22,12 +21,13 @@ void distTransformation (char *scheme,
 			int j;
 			for (j = 0; j < width; j++)
 			{
-				int dep_id = FT[k * slice_stride + i * width + j] / slice_stride;
+				int dep_id = int(ed_out[k * slice_stride + i * width + j]) \
+					    	 / slice_stride;
 				
-				int row_id = FT[k * slice_stride + i * width + j] \
+				int row_id = int(ed_out[k * slice_stride + i * width + j]) \
 						% slice_stride / width;
 
-				int col_id = FT[k * slice_stride + i * width + j] \
+				int col_id = int(ed_out[k * slice_stride + i * width + j]) \
 					     	% slice_stride % width;
 				
 				if (row_id == i && col_id == j && k == dep_id)
@@ -43,7 +43,8 @@ void distTransformation (char *scheme,
 						sp2, \
 						i, j, k, \
 						row_id, col_id, dep_id, \
-						raw_vol[FT[k * slice_stride + i * width + j]]); 
+						raw_vol[int(\
+							ed_out[k * slice_stride + i * width + j])]); 
 					}
 					else if (strcmp(scheme, "--center-center") == 0)
 					{

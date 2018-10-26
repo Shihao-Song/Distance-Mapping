@@ -13,16 +13,16 @@ typedef unsigned char uchar;
 /*
 	maurerFT: takes the raw volume and generates its FT (Feature Transformation)
 */
-void maurerFT(uchar *, float *, int, int, int, int *);
+void maurerFT(uchar *, float *, int, int, int, double *);
 
 /*
 	Helper functions, the following functions are the building blocks of maurerFT()
 */
-void VoronoiFT(int, uchar *, float *, int, int, int, int *);
+void VoronoiFT(int, uchar *, float *, int, int, int, double *);
 
-void RunVoronoiFT1D(uchar *, float *, int, int, int, int *);
-void RunVoronoiFT2D(float *, int, int, int, int *);
-void RunVoronoiFT3D(float *, int, int, int, int *);
+void RunVoronoiFT1D(uchar *, float *, int, int, int, double *);
+void RunVoronoiFT2D(float *, int, int, int, double *);
+void RunVoronoiFT3D(float *, int, int, int, double *);
 
 int removeFT2D(float *, GNodes *g, int *w, int *Rd);
 int removeFT3D(float *, GNodes *g, int *w, int *Rd);

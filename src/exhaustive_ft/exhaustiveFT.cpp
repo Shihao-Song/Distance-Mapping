@@ -2,7 +2,7 @@
 
 void exhaustiveFT(uchar *vol, float *sp2, 
 		int height, int width, int depth, \
-		int *output)
+		double *output)
 {
 	// Distance between slices
 	int slice_stride = height * width;
@@ -26,7 +26,7 @@ void exhaustiveFT(uchar *vol, float *sp2,
 void exhaustiveSearch(uchar *vol, float *sp2, \
 		int vol_i, int vol_j, int vol_k,\
 		int height, int width, int depth, \
-		int *output)
+		double *output)
 {
 
 	double minDist = DBL_MAX;
@@ -64,5 +64,5 @@ void exhaustiveSearch(uchar *vol, float *sp2, \
 		}
 	}
 	output[vol_k * slice_stride + vol_i * width + vol_j] = \
-		cfv_k * slice_stride + cfv_i * width + cfv_j;
+		double(cfv_k * slice_stride + cfv_i * width + cfv_j);
 }
