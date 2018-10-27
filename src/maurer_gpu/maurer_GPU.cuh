@@ -19,7 +19,8 @@ typedef unsigned char uchar;
 
 #define SIZE_OF_SHARED_MEMORY 1024
 
-__device__ double ED(int vol_i, int vol_j, int vol_k, int fv, \
+__device__ double ED_GPU(int vol_i, int vol_j, int vol_k, int fv, \
+						float sp2_0, float sp2_1, float sp2_2, \
 						int height, int width, int depth)
 {
 	int vol_slice_stride = height * width;
@@ -28,16 +29,16 @@ __device__ double ED(int vol_i, int vol_j, int vol_k, int fv, \
 	int fv_i = (fv % vol_slice_stride) / width;
 	int fv_j = (fv % vol_slice_stride) % width;
 
-	int temp = 0;
-	temp = (fv_i - vol_i) * (fv_i - vol_i) + \
-			(fv_j - vol_j) * (fv_j - vol_j) + \
-			(fv_k - vol_k) * (fv_k - vol_k);
+	double temp = 0;
+	temp = (fv_i - vol_i) * (fv_i - vol_i) * sp2_0 + \
+			(fv_j - vol_j) * (fv_j - vol_j) * sp2_1 + \
+			(fv_k - vol_k) * (fv_k - vol_k) * sp2_2;
 
 	return sqrt((double)temp);
 }
 
 template <typename T>
-__global__ void maurerFTGPU(T *input, int round, int height, int width, int depth, \
+__global__ void maurerFT_GPU(T *input, int round, int height, int width, int depth, \
 						float sp2_0, float sp2_1, float sp2_2, \
 						double *dev_output)
 {
@@ -171,8 +172,9 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 
 				if(fv_index != -1)
 				{
-					double tempDist = ED(thread_pos[1], thread_pos[0], thread_pos[2], \
-										fv_index, height, width, depth);
+					double tempDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], fv_index, \
+													sp2_0, sp2_1, sp2_2, \
+													height, width, depth);
 					
 					if (tempDist < minDist)
 					{
@@ -182,7 +184,7 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 				}
 			}
 
-			__syncthreads();
+			__syncthreads(); // This may not necessary
 			
 			if (partial_cfv_valid == 0)
 			{
@@ -205,8 +207,9 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 					}
 					else
 					{
-						double currentDist = ED(thread_pos[1], thread_pos[0], thread_pos[2], \
-											current_cfv_index, height, width, depth);
+						double currentDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], current_cfv_index, \
+															sp2_0, sp2_1, sp2_2, \
+															height, width, depth);
 
 						if (minDist < currentDist)
 						{
@@ -242,6 +245,8 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 				(3) when round = 2, thread blocks are moving along the depth.
 		*/
 		thread_pos[round] += blockDims[round];
+		
+		__syncthreads();
 	}
 //	}
 }

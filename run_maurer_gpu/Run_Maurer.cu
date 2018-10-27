@@ -7,6 +7,7 @@
 #include "../src/distance_transformation_openmp/distance_transformation.h" 
 
 #include "../src/maurer_gpu/maurer_GPU.cuh"
+#include "../src/distance_transformation_gpu/distance_transformation_gpu.cuh"
 
 /*
 	Volume info
@@ -51,14 +52,12 @@ int main(int argc, char *argv[])
 		raw_vol[i] = 0;
 	}
 
-	printf("\nGenerating testing data, volume size: 250 x 250 x 125 \n");
+	printf("\nGenerating testing data, volume size: %d x %d x %d \n", HEIGHT, WIDTH, DEPTH);
 	genFC(raw_vol); // Generate a feature cuboid 
 
-	//float sp[3] = {1.0, 2.5, 1.5}; // Voxel spacings, {i (height of a voxel), 
+	float sp[3] = {1.0, 2.5, 1.5}; // Voxel spacings, {i (height of a voxel), 
 				//		j (width of a voxel), 
 				//		k (depth of a voxel)}
-	
-	float sp[3] = {1.0, 1.0, 1.0};
 
 	float sp2[3] = {
 		sp[0] * sp[0],
@@ -134,11 +133,10 @@ int main(int argc, char *argv[])
 		HEIGHT, WIDTH, DEPTH, \
 		dist_mapping_maurer_openmp);
 
-	//distTransformation(argv[1], \
-			maurer_ft_openmp, \
+	distTransformation(argv[1], \
 			raw_vol, sp2, \
 			HEIGHT, WIDTH, DEPTH, \
-			dist_trans_openmp);
+			dist_mapping_maurer_openmp);
 
 	gettimeofday(&stopCPU, NULL);
 	long seconds = stopCPU.tv_sec - startCPU.tv_sec;
@@ -181,6 +179,27 @@ int main(int argc, char *argv[])
 	dimGrid_D3.x = int(ceil((double)WIDTH / (double)dimBlock_D3.x));
 	dimGrid_D3.y = int(ceil((double)HEIGHT / (double)dimBlock_D3.y));
 	dimGrid_D3.z = 1;
+	
+	// For distance translation
+	int scheme = 0;
+	if (strcmp(argv[1], "--center-face") == 0)
+	{
+		scheme = 1;
+	}
+	else if (strcmp(argv[1], "--center-center") == 0)
+	{
+		scheme = 0;
+	}
+	
+	dim3 dimBlock_DT;
+	dimBlock_DT.x = NUM_THREADS_PER_BLOCK;
+	dimBlock_DT.y = 1;
+	dimBlock_DT.z = 1;
+
+	dim3 dimGrid_DT;
+       	dimGrid_DT.x = NUM_BLOCKS_PER_GRID;
+        dimGrid_DT.y = 1;
+        dimGrid_DT.z = 1;
 
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);
@@ -189,22 +208,27 @@ int main(int argc, char *argv[])
 	printf("\nPerforming Maurer's Distance Mapping using GPU...\n");
 	cudaEventRecord(start);
 
-	maurerFTGPU<uchar><<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
+	maurerFT_GPU<uchar><<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
 						HEIGHT, WIDTH, DEPTH, \
 						sp2[0], sp2[1], sp2[2], \
 						dev_dist_mapping_maurer_gpu[0]);
 	
-	maurerFTGPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1, \
+	maurerFT_GPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1, \
 						HEIGHT, WIDTH, DEPTH, \
                                                 sp2[0], sp2[1], sp2[2], \
                                                 dev_dist_mapping_maurer_gpu[1]);
 	
-	maurerFTGPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu[1], 2, \
+	maurerFT_GPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu[1], 2, \
 						HEIGHT, WIDTH, DEPTH, \
                                                 sp2[0], sp2[1], sp2[2], \
-                                                dev_dist_mapping_maurer_gpu[0]);
+            					dev_dist_mapping_maurer_gpu[0]);
 	
-
+	
+	distTransformation_GPU<<<dimGrid_DT, dimBlock_DT>>>(scheme, \
+                        				dev_raw_vol, \
+                        				sp2[0], sp2[1], sp2[2], \
+							HEIGHT, WIDTH, DEPTH, \
+							dev_dist_mapping_maurer_gpu[0]);
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;
