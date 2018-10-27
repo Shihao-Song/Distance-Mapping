@@ -11,82 +11,17 @@
 /*
 	Volume info
 */
-#define HEIGHT 140
-#define WIDTH 139
-#define DEPTH 59
+#define HEIGHT 250
+#define WIDTH 250
+#define DEPTH 125
 
 typedef unsigned char uchar;
-
-void printVolume(uchar *vol)
-{
-	// Distance between slices
-	int slice_stride = HEIGHT * WIDTH;
-
-	int i, j, k;
-
-	for (k = 0; k < DEPTH; k++)
-	{
-		printf("Image Slice: %d\n", k);
-
-		for (i = 0; i < HEIGHT; i++)
-		{
-			for (j = 0; j < WIDTH; j++)
-			{
-				printf("0x%02x ", vol[k * slice_stride + i * WIDTH + j]);
-			}
-			printf("\n");
-		}
-		printf("\n");
-	}
-}
-
-void printDistTransformation(double *dist_trans)
-{
-        int slice_stride = HEIGHT * WIDTH;
-
-        int i, j, k;
-
-        for (k = 0; k < DEPTH; k++)
-        {
-                printf("Image Slice: %d\n", k);
-
-                for (i = 0; i < HEIGHT; i++)
-                {
-                        for (j = 0; j < WIDTH; j++)
-                        {
-				printf("%3d  ", int(dist_trans[k * slice_stride + i * WIDTH + j]));
-				/*
-				if (int(dist_trans[k * slice_stride + i * WIDTH + j]) == -1)
-				{
-					printf("(%2d, %2d, %2d)  ", -1, -1, -1);
-				}
-				else
-				{
-                                int dep_id = int(dist_trans[k * slice_stride + i * WIDTH + j]) \
-					     / slice_stride;
-
-				int row_id = int(dist_trans[k * slice_stride + i * WIDTH + j]) \
-					     / slice_stride / WIDTH;
-
-				int col_id = int(dist_trans[k * slice_stride + i * WIDTH + j]) \
-					     / slice_stride % WIDTH;
-				
-				printf("(%2d, %2d, %2d)  ", row_id, col_id, dep_id);
-				
-				}
-				*/
-                        }
-                        printf("\n");
-                }
-                printf("\n");
-        }
-}
 
 /*
 	Functions just for testing
 */
 void genFC(uchar *); // Simply generate a feature cuboid as shown in report (has boundary face)
-int check(double *, double *, int); // Check the Maurer's FT with the reference FT
+int check(double *, double *, int);
 
 int main(int argc, char *argv[])
 {
@@ -116,7 +51,7 @@ int main(int argc, char *argv[])
 		raw_vol[i] = 0;
 	}
 
-	printf("\nGenerating testing data...\n");
+	printf("\nGenerating testing data, volume size: 250 x 250 x 125 \n");
 	genFC(raw_vol); // Generate a feature cuboid 
 
 	//float sp[3] = {1.0, 2.5, 1.5}; // Voxel spacings, {i (height of a voxel), 
@@ -131,7 +66,6 @@ int main(int argc, char *argv[])
 		sp[2] * sp[2]	
 	};
 
-//	printVolume(raw_vol);
 	/********************************************************************
 		Step two: initialize distance mapping output for OpenMP	
 	*********************************************************************/
@@ -212,8 +146,6 @@ int main(int argc, char *argv[])
 	long mtime = seconds * 1000 + useconds / 1000.0;
 	printf("\nOpenMP Execution Time: %ld ms. \n", mtime);	
 
-//	printDistTransformation(dist_mapping_maurer_openmp);
-
 	/*******************************************************
 		Step six: Distance mapping using GPU
 	*******************************************************/
@@ -227,7 +159,6 @@ int main(int argc, char *argv[])
 	dimGrid_D1.x = 1;
 	dimGrid_D1.y = int(ceil((double)HEIGHT / (double)dimBlock_D1.y));
 	dimGrid_D1.z = int(ceil((double)DEPTH / (double)dimBlock_D1.z));
-	//printf("%2d %2d %2d \n", dimGrid_D1.x, dimGrid_D1.y, dimGrid_D1.z);
 
 	// D2 Scan
 	dim3 dimBlock_D2;
@@ -239,7 +170,6 @@ int main(int argc, char *argv[])
 	dimGrid_D2.x = int(ceil((double)WIDTH / (double)dimBlock_D2.x));
 	dimGrid_D2.y = 1;
 	dimGrid_D2.z = int(ceil((double)DEPTH / (double)dimBlock_D2.z));
-	//printf("%2d %2d %2d \n", dimGrid_D2.x, dimGrid_D2.y, dimGrid_D2.z);
 
 	// D3 Scan
 	dim3 dimBlock_D3;
@@ -252,21 +182,34 @@ int main(int argc, char *argv[])
 	dimGrid_D3.y = int(ceil((double)HEIGHT / (double)dimBlock_D3.y));
 	dimGrid_D3.z = 1;
 
+	cudaEvent_t start, stop;
+	cudaEventCreate(&start);
+	cudaEventCreate(&stop);
+
+	printf("\nPerforming Maurer's Distance Mapping using GPU...\n");
+	cudaEventRecord(start);
+
 	maurerFTGPU<uchar><<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
 						HEIGHT, WIDTH, DEPTH, \
 						sp2[0], sp2[1], sp2[2], \
 						dev_dist_mapping_maurer_gpu[0]);
 	
-//	maurerFTGPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1, \
+	maurerFTGPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1, \
 						HEIGHT, WIDTH, DEPTH, \
                                                 sp2[0], sp2[1], sp2[2], \
                                                 dev_dist_mapping_maurer_gpu[1]);
 	
-//	maurerFTGPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu, 2, \
+	maurerFTGPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu[1], 2, \
 						HEIGHT, WIDTH, DEPTH, \
                                                 sp2[0], sp2[1], sp2[2], \
-                                                dev_dist_mapping_maurer_gpu);
+                                                dev_dist_mapping_maurer_gpu[0]);
 	
+
+	cudaEventRecord(stop);
+	cudaEventSynchronize(stop);
+	float milliseconds = 0;
+	cudaEventElapsedTime(&milliseconds, start, stop);
+	printf("\nExecution Time on GPU: %f ms\n", milliseconds);
 	/*************************************************************
 		Step seven: transfer the results back to CPU 
 	**************************************************************/
@@ -278,7 +221,6 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-//	printDistTransformation(dist_mapping_maurer_gpu);
 	/***********************************
 		Step eight: checking 
 	************************************/

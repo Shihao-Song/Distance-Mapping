@@ -101,20 +101,11 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 	loading_pos[1] = thread_pos[1];
 	loading_pos[2] = thread_pos[2];
 	
-	/*
-		Boundary Checking 
-	*/
-//	if (thread_pos[0] < vol_dim[0] && thread_pos[1] < vol_dim[1] && thread_pos[2] < vol_dim[2])
-//	{	
-//	while (thread_pos[round] < vol_dim[round])
-//	{	
-	
 	int limit = int(ceil((double)vol_dim[round] / (double)blockDims[round]));
-
 	for (int i = 0; i < limit; i++)
 	{
 		/*
-			Initialize share memory region 
+			Initialize shared memory region 
 		*/
 		partial_cfv[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = -1;
         	partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = -1;
@@ -143,9 +134,12 @@ __global__ void maurerFTGPU(T *input, int round, int height, int width, int dept
 				}
 			}
 			else
-			{
-				partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = \
-				int(input[loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0]]);
+			{	
+				if (loading_pos[0] < vol_dim[0] && loading_pos[1] < vol_dim[1] && loading_pos[2] < vol_dim[2])
+				{
+					partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = \
+					int(input[loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0]]);
+				}
 			}
 
 			__syncthreads();

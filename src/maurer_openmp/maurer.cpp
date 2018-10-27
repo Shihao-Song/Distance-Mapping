@@ -23,10 +23,10 @@ void VoronoiFT(int dim, \
 			RunVoronoiFT1D(vol, sp2, height, width, depth, output);
 			break;
 		case 2:
-//			RunVoronoiFT2D(sp2, height, width, depth, output);
+			RunVoronoiFT2D(sp2, height, width, depth, output);
 			break;
 		case 3:
-//			RunVoronoiFT3D(sp2, height, width, depth, output);
+			RunVoronoiFT3D(sp2, height, width, depth, output);
 			break;
 		default:
 			break;
