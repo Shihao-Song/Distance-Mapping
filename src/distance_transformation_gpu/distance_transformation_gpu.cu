@@ -64,7 +64,6 @@ __device__ double distToClosetFacePointOfCFV_GPU(
 
 	double calculated_dists[6];
 
-	
 	// Negative i face
 	calculated_dists[0] = (isKthBitSet_GPU(cfv_val, 1) == 0) ? DBL_MAX : \
 					distToFacePoint_I_GPU( \
@@ -117,7 +116,6 @@ __device__ double distToClosetFacePointOfCFV_GPU(
 
 	
 	return closet_dist;
-	
 }
 
 __device__ double distToFacePoint_I_GPU(
