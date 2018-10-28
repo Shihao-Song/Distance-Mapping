@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 	printf("\nPerforming Maurer's Distance Mapping using GPU...\n");
 	cudaEventRecord(start);
 
-	maurerFT_GPU<uchar><<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
+	maurerFT_GPU<<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
 						HEIGHT, WIDTH, DEPTH, \
 						sp2[0], sp2[1], sp2[2], \
 						dev_dist_mapping_maurer_gpu[0]);
