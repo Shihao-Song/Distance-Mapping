@@ -4,10 +4,6 @@
 #include <math.h>
 #include <float.h>
 
-#include <stdio.h>
-
-#include "omp.h"
-
 #define NUM_THREADS_PER_BLOCK 512
 #define NUM_BLOCKS_PER_GRID 512
 
