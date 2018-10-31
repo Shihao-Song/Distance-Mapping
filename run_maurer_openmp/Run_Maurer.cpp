@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 	************************************************************/
 	double *dist_mapping_ref = (double *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(double));
 	
-	double *dist_mapping_maurer_openmp = \
+	double *dist_mapping_maurer_openmp =
 				(double *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(double));
 
 	// Initialization
@@ -86,18 +86,30 @@ int main(int argc, char *argv[])
 	***************************************************************/
 	printf("\nGenerating reference solution...\n");
 	// Step one: perform FT using exhaustive search
-	exhaustiveFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, dist_mapping_ref);
+	exhaustiveFT(raw_vol, sp2, 
+		HEIGHT, WIDTH, DEPTH, 
+		dist_mapping_ref);
+	
 	// Step two: perform address translation based on translation scheme
-	distTransformation (argv[1], raw_vol, sp2, HEIGHT, WIDTH, DEPTH, dist_mapping_ref);
+	distTransformation (argv[1], 
+			raw_vol, sp2, 
+			HEIGHT, WIDTH, DEPTH, 
+			dist_mapping_ref);
 
 	printf("\nPerforming Distance Mapping using Maurer (OpenMP)...\n");
 	struct timeval stopCPU, startCPU;
 	gettimeofday(&startCPU, NULL);
 	
 	// Step one: perform FT using maurer's
-	maurerFT(raw_vol, sp2, HEIGHT, WIDTH, DEPTH, dist_mapping_maurer_openmp);
+	maurerFT(raw_vol, sp2, 
+		HEIGHT, WIDTH, DEPTH, 
+		dist_mapping_maurer_openmp);
+
 	// Step two: perform address translation based on translation scheme
-	distTransformation (argv[1], raw_vol, sp2, HEIGHT, WIDTH, DEPTH, dist_mapping_maurer_openmp);
+	distTransformation (argv[1], 
+			raw_vol, sp2, 
+			HEIGHT, WIDTH, DEPTH, 
+			dist_mapping_maurer_openmp);
 	
 	gettimeofday(&stopCPU, NULL);
 	long seconds = stopCPU.tv_sec - startCPU.tv_sec;

@@ -21,13 +21,13 @@ void distTransformation (char *scheme,
 			int j;
 			for (j = 0; j < width; j++)
 			{
-				int dep_id = int(ed_out[k * slice_stride + i * width + j]) \
+				int dep_id = int(ed_out[k * slice_stride + i * width + j])
 					    	 / slice_stride;
 				
-				int row_id = int(ed_out[k * slice_stride + i * width + j]) \
+				int row_id = int(ed_out[k * slice_stride + i * width + j])
 						% slice_stride / width;
 
-				int col_id = int(ed_out[k * slice_stride + i * width + j]) \
+				int col_id = int(ed_out[k * slice_stride + i * width + j])
 					     	% slice_stride % width;
 				
 				if (row_id == i && col_id == j && k == dep_id)
@@ -38,20 +38,20 @@ void distTransformation (char *scheme,
 				{
 					if (strcmp(scheme, "--center-face") == 0)
 					{
-						ed_out[k * slice_stride + i * width + j] = \
+						ed_out[k * slice_stride + i * width + j] =
 						distToClosetFacePointOfCFV(
-						sp2, \
-						i, j, k, \
-						row_id, col_id, dep_id, \
-						raw_vol[int(\
+						sp2,
+						i, j, k,
+						row_id, col_id, dep_id,
+						raw_vol[int(
 							ed_out[k * slice_stride + i * width + j])]); 
 					}
 					else if (strcmp(scheme, "--center-center") == 0)
 					{
-						ed_out[k * slice_stride + i * width + j] = \
+						ed_out[k * slice_stride + i * width + j] =
 						calcDist(
-						sp2, \
-						i, j, k, \
+						sp2,
+						i, j, k,
 						row_id, col_id, dep_id); 
 					}
 				}
@@ -255,8 +255,8 @@ double calcDist(float *sp2,
 		double i, double j, double k, \
 		double target_i, double target_j, double target_k)
 {
-	double result = (i - target_i) * (i - target_i) * sp2[0] + \
-			(j - target_j) * (j - target_j) * sp2[1] + \
+	double result = (i - target_i) * (i - target_i) * sp2[0] +
+			(j - target_j) * (j - target_j) * sp2[1] +
 			(k - target_k) * (k - target_k) * sp2[2];
 
 	return sqrt(result);
