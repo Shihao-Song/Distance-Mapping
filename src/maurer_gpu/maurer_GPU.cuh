@@ -3,8 +3,6 @@
 
 #include <float.h>
 
-typedef unsigned char uchar;
-
 #define D1_NUM_THREADS_PER_BLOCK_X 32
 #define D1_NUM_THREADS_PER_BLOCK_Y 8
 #define D1_NUM_THREADS_PER_BLOCK_Z 4
@@ -19,9 +17,10 @@ typedef unsigned char uchar;
 
 #define SIZE_OF_SHARED_MEMORY 1024
 
-__device__ double ED_GPU(int vol_i, int vol_j, int vol_k, int fv, \
-						float sp2_0, float sp2_1, float sp2_2, \
-						int height, int width, int depth)
+__device__ double ED_GPU(int vol_i, int vol_j, int vol_k, 
+			int fv,
+			float sp2_0, float sp2_1, float sp2_2,
+			int height, int width, int depth)
 {
 	int vol_slice_stride = height * width;
 
@@ -30,17 +29,19 @@ __device__ double ED_GPU(int vol_i, int vol_j, int vol_k, int fv, \
 	int fv_j = (fv % vol_slice_stride) % width;
 
 	double temp = 0;
-	temp = (fv_i - vol_i) * (fv_i - vol_i) * sp2_0 + \
-			(fv_j - vol_j) * (fv_j - vol_j) * sp2_1 + \
+	temp = (fv_i - vol_i) * (fv_i - vol_i) * sp2_0 +
+			(fv_j - vol_j) * (fv_j - vol_j) * sp2_1 +
 			(fv_k - vol_k) * (fv_k - vol_k) * sp2_2;
 
 	return sqrt((double)temp);
 }
 
 template <typename T>
-__global__ void maurerFT_GPU(T *input, int round, int height, int width, int depth, \
-						float sp2_0, float sp2_1, float sp2_2, \
-						double *dev_output)
+__global__ void maurerFT_GPU(T *input, 
+			int round, 
+			int height, int width, int depth,
+			float sp2_0, float sp2_1, float sp2_2,
+			double *dev_output)
 {
 	/* partial_cfv contains the calculated partial feature voxels */
 	__shared__ int partial_cfv[SIZE_OF_SHARED_MEMORY];
@@ -129,8 +130,8 @@ __global__ void maurerFT_GPU(T *input, int round, int height, int width, int dep
 			{
 				if (loading_pos[0] < vol_dim[0] && loading_pos[1] < vol_dim[1] && loading_pos[2] < vol_dim[2])
 				{
-					partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = \
-					(input[loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0]] != 0) ? \
+					partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] =
+					(input[loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0]] != 0) ?
 					loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0] : -1;
 				}
 			}
@@ -138,7 +139,7 @@ __global__ void maurerFT_GPU(T *input, int round, int height, int width, int dep
 			{	
 				if (loading_pos[0] < vol_dim[0] && loading_pos[1] < vol_dim[1] && loading_pos[2] < vol_dim[2])
 				{
-					partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] = \
+					partial_voxels[threadIds[2] * shared_dist_betw_slices + threadIds[1] * blockDims[0] + threadIds[0]] =
 					int(input[loading_pos[2] * vol_dist_betw_slices + loading_pos[1] * vol_dim[0] + loading_pos[0]]);
 				}
 			}
@@ -156,24 +157,24 @@ __global__ void maurerFT_GPU(T *input, int round, int height, int width, int dep
 			{	
 				if (round == 0)
 				{
-					fv_index = partial_voxels[threadIds[2] * shared_dist_betw_slices + \
+					fv_index = partial_voxels[threadIds[2] * shared_dist_betw_slices +
 												threadIds[1] * blockDims[0] + i];
 				}
 				else if (round == 1)
 				{
-					fv_index = partial_voxels[threadIds[2] * shared_dist_betw_slices + \
+					fv_index = partial_voxels[threadIds[2] * shared_dist_betw_slices +
 												i * blockDims[0] + threadIds[0]];
 				}
 				else
 				{
-					fv_index = partial_voxels[i * shared_dist_betw_slices + \
+					fv_index = partial_voxels[i * shared_dist_betw_slices +
 												threadIds[1] * blockDims[0] + threadIds[0]];
 				}
 
 				if(fv_index != -1)
 				{
-					double tempDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], fv_index, \
-													sp2_0, sp2_1, sp2_2, \
+					double tempDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], fv_index,
+													sp2_0, sp2_1, sp2_2,
 													height, width, depth);
 					
 					if (tempDist < minDist)
@@ -188,32 +189,32 @@ __global__ void maurerFT_GPU(T *input, int round, int height, int width, int dep
 			
 			if (partial_cfv_valid == 0)
 			{
-				partial_cfv[threadIds[2] * shared_dist_betw_slices \
+				partial_cfv[threadIds[2] * shared_dist_betw_slices 
 								+ threadIds[1] * blockDims[0] + threadIds[0]] = cfv_index;
 
 				partial_cfv_valid = 1;
 			}
 			else
 			{
-				int current_cfv_index = partial_cfv[threadIds[2] * shared_dist_betw_slices \
+				int current_cfv_index = partial_cfv[threadIds[2] * shared_dist_betw_slices
 										+ threadIds[1] * blockDims[0] + threadIds[0]];
 
 				if (cfv_index != -1)
 				{
 					if (current_cfv_index == -1)
 					{
-						partial_cfv[threadIds[2] * shared_dist_betw_slices \
+						partial_cfv[threadIds[2] * shared_dist_betw_slices
 								+ threadIds[1] * blockDims[0] + threadIds[0]] = cfv_index;
 					}
 					else
 					{
-						double currentDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], current_cfv_index, \
-															sp2_0, sp2_1, sp2_2, \
+						double currentDist = ED_GPU(thread_pos[1], thread_pos[0], thread_pos[2], current_cfv_index,
+															sp2_0, sp2_1, sp2_2,
 															height, width, depth);
 
 						if (minDist < currentDist)
 						{
-							partial_cfv[threadIds[2] * shared_dist_betw_slices \
+							partial_cfv[threadIds[2] * shared_dist_betw_slices
 								+ threadIds[1] * blockDims[0] + threadIds[0]] = cfv_index;
 						}
 					}
@@ -235,7 +236,7 @@ __global__ void maurerFT_GPU(T *input, int round, int height, int width, int dep
 		if (thread_pos[0] < vol_dim[0] && thread_pos[1] < vol_dim[1] && thread_pos[2] < vol_dim[2])
 		{
 			dev_output[thread_pos[2] * vol_dist_betw_slices + thread_pos[1] * vol_dim[0] 
-						+ thread_pos[0]] = double(partial_cfv[threadIds[2] * shared_dist_betw_slices \
+						+ thread_pos[0]] = double(partial_cfv[threadIds[2] * shared_dist_betw_slices
 									+ threadIds[1] * blockDims[0] + threadIds[0]]);
 		}
 		/* 

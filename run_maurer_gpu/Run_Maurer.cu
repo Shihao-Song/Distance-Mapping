@@ -16,12 +16,10 @@
 #define WIDTH 250
 #define DEPTH 125
 
-typedef unsigned char uchar;
-
 /*
 	Functions just for testing
 */
-void genFC(uchar *); // Simply generate a feature cuboid as shown in report (has boundary face)
+void genFC(unsigned char *); // Simply generate a feature cuboid
 int check(double *, double *, int);
 
 int main(int argc, char *argv[])
@@ -36,11 +34,11 @@ int main(int argc, char *argv[])
 	/***************************************************
 		Step one: initialize testing volume
 	****************************************************/
-	uchar *raw_vol;
+	unsigned char *raw_vol;
 	
 	// raw_vol will be transfered to GPU
 	// cudaHostAlloc is similar to malloc but faster when transfering data to GPU
-	if (cudaHostAlloc((void **)&raw_vol, HEIGHT * WIDTH * DEPTH * sizeof(uchar), \
+	if (cudaHostAlloc((void **)&raw_vol, HEIGHT * WIDTH * DEPTH * sizeof(unsigned char),
 						cudaHostAllocDefault) != cudaSuccess)
 	{
 		printf("cudaHostAlloc() failed! \n");
@@ -68,7 +66,7 @@ int main(int argc, char *argv[])
 	/********************************************************************
 		Step two: initialize distance mapping output for OpenMP	
 	*********************************************************************/
-	double *dist_mapping_maurer_openmp = \
+	double *dist_mapping_maurer_openmp =
 			(double *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(double));	
 	
 	// Initialization
@@ -81,8 +79,8 @@ int main(int argc, char *argv[])
 		Step three: initialize distance mapping output for GPU 
 	**********************************************************************/
 	double *dist_mapping_maurer_gpu;
-	if (cudaHostAlloc((void **)&dist_mapping_maurer_gpu, \
-				HEIGHT * WIDTH * DEPTH * sizeof(double), \
+	if (cudaHostAlloc((void **)&dist_mapping_maurer_gpu,
+				HEIGHT * WIDTH * DEPTH * sizeof(double),
 				cudaHostAllocDefault) != cudaSuccess)
 	{
 		printf("cudaHostAlloc() failed! \n");
@@ -93,15 +91,16 @@ int main(int argc, char *argv[])
 		Step four: Allocate device (GPU) memory 
 	********************************************************/
 	// Memory location contains raw volume
-	uchar *dev_raw_vol;
-	if (cudaMalloc((void **)&dev_raw_vol, HEIGHT * WIDTH * DEPTH * sizeof(uchar)) != cudaSuccess)
+	unsigned char *dev_raw_vol;
+	if (cudaMalloc((void **)&dev_raw_vol, 
+				HEIGHT * WIDTH * DEPTH * sizeof(unsigned char)) != cudaSuccess)
 	{
 		printf("cudaMalloc() failed.\n");
 		exit(0);
 	}
 
 	// Transfer raw_vol to GPU
-	if (cudaMemcpy(dev_raw_vol, raw_vol, HEIGHT * WIDTH * DEPTH * sizeof(uchar), \
+	if (cudaMemcpy(dev_raw_vol, raw_vol, HEIGHT * WIDTH * DEPTH * sizeof(unsigned char),
 		cudaMemcpyHostToDevice) != cudaSuccess)
 	{
 		printf("cudaMemcpy() failed! \n");
@@ -113,7 +112,7 @@ int main(int argc, char *argv[])
 
 	for (int i = 0; i < 2; i++)
 	{
-		if (cudaMalloc((void **)&dev_dist_mapping_maurer_gpu[i], \
+		if (cudaMalloc((void **)&dev_dist_mapping_maurer_gpu[i],
 				HEIGHT * WIDTH * DEPTH * sizeof(double)) != cudaSuccess)
         	{
                 	printf("cudaMalloc() failed.\n");
@@ -129,13 +128,13 @@ int main(int argc, char *argv[])
 	struct timeval stopCPU, startCPU;
 	gettimeofday(&startCPU, NULL);
 	
-	maurerFT(raw_vol, sp2, \
-		HEIGHT, WIDTH, DEPTH, \
+	maurerFT(raw_vol, sp2,
+		HEIGHT, WIDTH, DEPTH,
 		dist_mapping_maurer_openmp);
 
-	distTransformation(argv[1], \
-			raw_vol, sp2, \
-			HEIGHT, WIDTH, DEPTH, \
+	distTransformation(argv[1],
+			raw_vol, sp2,
+			HEIGHT, WIDTH, DEPTH,
 			dist_mapping_maurer_openmp);
 
 	gettimeofday(&stopCPU, NULL);
@@ -208,26 +207,25 @@ int main(int argc, char *argv[])
 	printf("\nPerforming Maurer's Distance Mapping using GPU...\n");
 	cudaEventRecord(start);
 
-	maurerFT_GPU<<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0, \
-						HEIGHT, WIDTH, DEPTH, \
-						sp2[0], sp2[1], sp2[2], \
+	maurerFT_GPU<<<dimGrid_D1, dimBlock_D1>>>(dev_raw_vol, 0,
+						HEIGHT, WIDTH, DEPTH,
+						sp2[0], sp2[1], sp2[2],
 						dev_dist_mapping_maurer_gpu[0]);
 	
-	maurerFT_GPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1, \
-						HEIGHT, WIDTH, DEPTH, \
-                                                sp2[0], sp2[1], sp2[2], \
+	maurerFT_GPU<<<dimGrid_D2, dimBlock_D2>>>(dev_dist_mapping_maurer_gpu[0], 1,
+						HEIGHT, WIDTH, DEPTH,
+                                                sp2[0], sp2[1], sp2[2],
                                                 dev_dist_mapping_maurer_gpu[1]);
 	
-	maurerFT_GPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu[1], 2, \
-						HEIGHT, WIDTH, DEPTH, \
-                                                sp2[0], sp2[1], sp2[2], \
+	maurerFT_GPU<<<dimGrid_D3, dimBlock_D3>>>(dev_dist_mapping_maurer_gpu[1], 2,
+						HEIGHT, WIDTH, DEPTH,
+                                                sp2[0], sp2[1], sp2[2],
             					dev_dist_mapping_maurer_gpu[0]);
-	
-	
-	distTransformation_GPU<<<dimGrid_DT, dimBlock_DT>>>(scheme, \
-                        				dev_raw_vol, \
-                        				sp2[0], sp2[1], sp2[2], \
-							HEIGHT, WIDTH, DEPTH, \
+
+	distTransformation_GPU<<<dimGrid_DT, dimBlock_DT>>>(scheme,
+							dev_raw_vol,
+                        				sp2[0], sp2[1], sp2[2],
+							HEIGHT, WIDTH, DEPTH,
 							dev_dist_mapping_maurer_gpu[0]);
 	cudaEventRecord(stop);
 	cudaEventSynchronize(stop);
@@ -237,8 +235,8 @@ int main(int argc, char *argv[])
 	/*************************************************************
 		Step seven: transfer the results back to CPU 
 	**************************************************************/
-	if (cudaMemcpy(dist_mapping_maurer_gpu, dev_dist_mapping_maurer_gpu[0], \
-			HEIGHT * WIDTH * DEPTH * sizeof(double), \
+	if (cudaMemcpy(dist_mapping_maurer_gpu, dev_dist_mapping_maurer_gpu[0],
+			HEIGHT * WIDTH * DEPTH * sizeof(double),
 			cudaMemcpyDeviceToHost) != cudaSuccess)
 	{
 		printf("cudaMemcpy() failed! \n");
@@ -248,8 +246,8 @@ int main(int argc, char *argv[])
 	/***********************************
 		Step eight: checking 
 	************************************/
-	if (check(dist_mapping_maurer_openmp, \
-		dist_mapping_maurer_gpu, \
+	if (check(dist_mapping_maurer_openmp,
+		dist_mapping_maurer_gpu,
 		HEIGHT * WIDTH * DEPTH) == 0)
         {
                 printf("\nMaurer GPU Testing: Error! \n");
@@ -277,7 +275,7 @@ int main(int argc, char *argv[])
 	return 1;
 }
 
-void genFC(uchar *vol)
+void genFC(unsigned char *vol)
 {
 	/* Distance between slices */
 	int slice_stride = HEIGHT * WIDTH;

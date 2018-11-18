@@ -7,10 +7,8 @@
 #define NUM_THREADS_PER_BLOCK 512
 #define NUM_BLOCKS_PER_GRID 512
 
-typedef unsigned char uchar;
-
 __global__ void distTransformation_GPU (int scheme,
-                        uchar *raw_vol,
+                        unsigned char *raw_vol,
                         float sp2_0, float sp2_1, float sp2_2,
                         int height, int width, int depth,
                         double *ed_out);
@@ -20,7 +18,7 @@ __device__ double distToClosetFacePointOfCFV_GPU(
                                 float sp2_0, float sp2_1, float sp2_2,
                                 int i, int j, int k,
                                 int cfv_i, int cfv_j, int cfv_k,
-                                uchar cfv_val);
+                                unsigned char cfv_val);
 
 __device__ double distToFacePoint_I_GPU(
                         float sp2_0, float sp2_1, float sp2_2,

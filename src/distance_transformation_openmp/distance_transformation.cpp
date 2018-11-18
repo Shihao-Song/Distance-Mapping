@@ -1,7 +1,7 @@
 #include "distance_transformation.h"
 
 void distTransformation (char *scheme,
-			uchar *raw_vol,
+			unsigned char *raw_vol,
 		       	float *sp2,	
 			int height, int width, int depth, 
 			double *ed_out)
@@ -65,7 +65,7 @@ double distToClosetFacePointOfCFV(
 				float *sp2,
 				int i, int j, int k,
 				int cfv_i, int cfv_j, int cfv_k,
-		       		uchar cfv_val)
+		       		unsigned char cfv_val)
 {
 	double dist = DBL_MAX;
 
@@ -252,7 +252,7 @@ double distToFacePoint(int unchanged, // which dimension stays unchanged
 }
 
 double calcDist(float *sp2,
-		double i, double j, double k, \
+		double i, double j, double k,
 		double target_i, double target_j, double target_k)
 {
 	double result = (i - target_i) * (i - target_i) * sp2[0] +
