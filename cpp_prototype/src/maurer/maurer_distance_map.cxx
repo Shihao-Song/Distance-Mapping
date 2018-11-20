@@ -12,7 +12,7 @@ void Maurer_Distance_Map::run_maurer(Vol *vol)
 	unsigned char *raw_vol = vol->raw_vol;
 
 	// Intialize distance mapping outputs
-	double *dist_mapping_maurer_openmp =
+	dist_mapping_maurer_openmp =
                                 (double *)malloc(height * width * depth * sizeof(double));
 
 	for (int i = 0; i < height * width * depth; i++)
@@ -26,7 +26,10 @@ void Maurer_Distance_Map::run_maurer(Vol *vol)
                 height, width, depth,
                 dist_mapping_maurer_openmp);
 
-	free(dist_mapping_maurer_openmp);
+	boundary_face_dist_calc->run_boundary_face_distance_calculation(vol,
+                                                                        dist_mapping_maurer_openmp);
+
+//	free(dist_mapping_maurer_openmp);
 
 }
 

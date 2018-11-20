@@ -1,27 +1,39 @@
-#ifndef _MAURER_FT_H_
-#define _MAURER_FT_H_
+#ifndef _MAURER_D_M_H_
+#define _MAURER_D_M_H_
 
 #include <cstdlib>
 #include <cmath>
 #include <cfloat>
 
-#include <iostream>
-
 #include "omp.h"
 
 #include "../tmp/Vol.h"
+
+#include "../boundary_face_dist/boundary_face_distance.h"
 
 using namespace std;
 
 class Maurer_Distance_Map
 {
 public:
-	Maurer_Distance_Map () {}
-	~Maurer_Distance_Map () {}
+	Maurer_Distance_Map (char *mapping_scheme) 
+	{
+		boundary_face_dist_calc = new Boundary_Face_Distance(mapping_scheme);
+	}
+
+	~Maurer_Distance_Map () 
+	{
+		free(boundary_face_dist_calc);
+	}
 
 	void run_maurer(Vol *vol);
 
+	double *dist_mapping_maurer_openmp;
+
 protected:
+
+	Boundary_Face_Distance *boundary_face_dist_calc;
+
 	/*
 		In-class data structure	
 	*/

@@ -1,9 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
-#include <time.h>
-#include <sys/time.h>
 
+#include "../src/exhaustive/exhaustive_distance_map.h"
 #include "../src/maurer/maurer_distance_map.h"
+#include "../src/maurer_gpu/maurer_distance_map_gpu.cuh"
 #include "../src/tmp/Vol.h"
 
 #define HEIGHT 64
@@ -32,22 +32,39 @@ int main(int argc, char *argv[])
 	/**************************************************************
 		Step two: compute using exhaustive and maurer
 	***************************************************************/
-	Maurer_Distance_Map maurer;
+	Maurer_Distance_Map maurer(argv[1]);
 	maurer.run_maurer(&vol);
+
+	Exhaustive_Distance_Map exhaustive(argv[1]);
+	exhaustive.run_exhaustive(&vol);
+
+	Maurer_Distance_Map_GPU maurer_gpu(argv[1]);
+	maurer_gpu.run_maurer_gpu(&vol);
 
 	/************************************************
 		Step four: check the generated FT
 	*************************************************/
-	/*
-	if (check(dist_mapping_ref, dist_mapping_maurer_openmp, HEIGHT * WIDTH * DEPTH) == 0)
+	if (check(exhaustive.dist_mapping_exhaustive, 
+			maurer.dist_mapping_maurer_openmp, 
+			HEIGHT * WIDTH * DEPTH) == 0)
 	{
-		printf("\nMaurer Testing: Error! \n");
+		printf("\nmaurer openmp: error! \n");
 	}
 	else
 	{
-		printf("\nMaurer Testing: Successful! (Ref Solution: Exhaustive Search) \n");
+		printf("\nmaurer openmp: successful! (ref solution: exhaustive search) \n");
 	}
-	*/
+	
+	if (check(exhaustive.dist_mapping_exhaustive, 
+			maurer_gpu.dist_mapping_maurer_gpu, 
+			HEIGHT * WIDTH * DEPTH) == 0)
+	{
+		printf("\nmaurer GPU: error! \n");
+	}
+	else
+	{
+		printf("\nmaurer GPU: successful! (ref solution: exhaustive search) \n");
+	}
 
 	return 1;
 }
