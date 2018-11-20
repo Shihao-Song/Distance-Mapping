@@ -1,23 +1,25 @@
 #ifndef _MAURER_FT_H_
 #define _MAURER_FT_H_
 
+#include <cstdlib>
 #include <cmath>
 #include <cfloat>
 
+#include <iostream>
+
 #include "omp.h"
+
+#include "../tmp/Vol.h"
 
 using namespace std;
 
 class Maurer_Distance_Map
 {
 public:
-	Maurer_Distance_Map ();
-	~Maurer_Distance_Map ();
+	Maurer_Distance_Map () {}
+	~Maurer_Distance_Map () {}
 
-	void run_maurer()
-	{
-		
-	}
+	void run_maurer(Vol *vol);
 
 protected:
 	/*

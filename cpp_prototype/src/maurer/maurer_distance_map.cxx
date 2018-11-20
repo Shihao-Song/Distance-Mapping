@@ -1,5 +1,35 @@
 #include "maurer_distance_map.h"
 
+void Maurer_Distance_Map::run_maurer(Vol *vol)
+{
+	// Volume information
+	int height = vol->height;
+	int width = vol->width;
+	int depth = vol->depth;
+
+	float *sp2 = vol->sp2;
+
+	unsigned char *raw_vol = vol->raw_vol;
+
+	// Intialize distance mapping outputs
+	double *dist_mapping_maurer_openmp =
+                                (double *)malloc(height * width * depth * sizeof(double));
+
+	for (int i = 0; i < height * width * depth; i++)
+        {
+                dist_mapping_maurer_openmp[i] = -1.0;
+        }
+
+	// Perform FT using Maurer's
+	maurerFT(raw_vol, 
+		sp2,
+                height, width, depth,
+                dist_mapping_maurer_openmp);
+
+	free(dist_mapping_maurer_openmp);
+
+}
+
 void Maurer_Distance_Map::maurerFT(unsigned char *vol,
         				float *sp2,
         				int height, int width, int depth,
@@ -61,7 +91,9 @@ void Maurer_Distance_Map::runVoronoiFT1D(unsigned char *vol,
 		{
 			for (int j = 0; j < width; j++)
 			{
-				if (vol[k * slice_stride + i * width + j] != 0)
+				int fv = int(vol[k * slice_stride + i * width + j]); 
+
+				if (fv != 0)
 				{
 					push(&g, i, j, k);
 				}
@@ -221,6 +253,7 @@ void Maurer_Distance_Map::runVoronoiFT3D(float *sp2,
 			for (int k = 0; k < depth; k++)
 			{
 				int fv = int(vol[k * slice_stride + i * width + j]); 
+				
 				if (fv != -1.0)
 				{
 					int fv_k = fv / slice_stride;

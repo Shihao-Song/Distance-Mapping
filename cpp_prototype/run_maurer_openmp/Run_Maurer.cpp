@@ -27,28 +27,14 @@ int main(int argc, char *argv[])
 	/***************************************************
 		Step one: initialize testing volume
 	****************************************************/
-	Vol vol(HEIGHT, WIDTH, DEPTH);
-	
-	/***********************************************************
-		Step two: intialize distance mapping outputs	
-	************************************************************/
-	double *dist_mapping_ref = (double *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(double));
-	
-	double *dist_mapping_maurer_openmp =
-				(double *)malloc(HEIGHT * WIDTH * DEPTH * sizeof(double));
-
-	// Initialization
-	for (int i = 0; i < HEIGHT * WIDTH * DEPTH; i++)
-	{
-		dist_mapping_ref[i] = -1.0;
-		dist_mapping_maurer_openmp[i] = -1.0;
-	}	
+	Vol vol(HEIGHT, WIDTH, DEPTH);	
 
 	/**************************************************************
-		Step three: compute using exhaustive and maurer
+		Step two: compute using exhaustive and maurer
 	***************************************************************/
-	
-	
+	Maurer_Distance_Map maurer;
+	maurer.run_maurer(&vol);
+
 	/************************************************
 		Step four: check the generated FT
 	*************************************************/
@@ -62,13 +48,6 @@ int main(int argc, char *argv[])
 		printf("\nMaurer Testing: Successful! (Ref Solution: Exhaustive Search) \n");
 	}
 	*/
-
-	/*
-		Free memory resource
-	*/
-
-	free(dist_mapping_ref);
-	free(dist_mapping_maurer_openmp);
 
 	return 1;
 }
